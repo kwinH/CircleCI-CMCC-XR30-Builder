@@ -382,6 +382,44 @@ function setup_custom_lan_ip() {
 }
 
 # ============================================
+# Specialized Configuration Functions
+# ============================================
+
+function configure_daed_kernel_options() {
+    echo "🔧 Configuring kernel options for Daed eBPF support..."
+    
+    # Core BPF support
+    config_add "KERNEL_BPF"
+    config_add "KERNEL_BPF_SYSCALL"
+    config_add "KERNEL_BPF_JIT"
+    
+    # Control Groups support
+    config_add "KERNEL_CGROUPS"
+    
+    # Kernel probes support
+    config_add "KERNEL_KPROBES"
+    config_add "KERNEL_KPROBE_EVENTS"
+    
+    # Network traffic control
+    config_add "KERNEL_NET_INGRESS"
+    config_add "KERNEL_NET_EGRESS"
+    config_add "KERNEL_NET_SCH_INGRESS"
+    config_add "KERNEL_NET_CLS_BPF"
+    config_add "KERNEL_NET_CLS_ACT"
+    
+    # BPF stream parser and events
+    config_add "KERNEL_BPF_STREAM_PARSER"
+    config_add "KERNEL_BPF_EVENTS"
+    
+    # Debug information for BPF
+    config_add "KERNEL_DEBUG_INFO"
+    config_del "KERNEL_DEBUG_INFO_REDUCED"
+    config_add "KERNEL_DEBUG_INFO_BTF"
+    
+    echo "✅ Daed kernel configuration completed"
+}
+
+# ============================================
 # Custom Package Management Functions
 # ============================================
 
@@ -534,6 +572,9 @@ function configure_custom_applications() {
     
     # Advanced routing and proxy
     config_package_add "luci-app-daed"          # Daed WebUI
+    
+    # Configure kernel options for Daed (eBPF support)
+    configure_daed_kernel_options
     
     # Optional packages (commented out by default)
     # config_package_add "luci-app-frpc"        # FRP client
