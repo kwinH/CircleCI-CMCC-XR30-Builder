@@ -98,11 +98,10 @@ fi
 
 config_device_list
 
-config_device_keep_only "cmcc_xr30"
+# Keep only XR30-stock device (H layout compatible)
+config_device_keep_only "cmcc_xr30-stock"
 
-config_device_del "cmcc_xr30-emmc"
-
-echo "Replaced List"
+echo "✅ Configured for XR30-stock (H layout) only"
 
 config_device_list
 
