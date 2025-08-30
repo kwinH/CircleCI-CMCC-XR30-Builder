@@ -256,6 +256,24 @@ jobs:
               run: |
                 mapfile -t devices < <(grep '^CONFIG_TARGET_DEVICE.*=y' openwrt/.config | sed -r 's/.*DEVICE_(.*)=y/\1/')
                 cd openwrt/bin/targets/*/*
+                
+                echo "📋 检查构建结果..."
+                echo "生成的所有文件："
+                ls -la
+                echo ""
+                
+                echo "查找 CMCC XR30 相关文件："
+                find . -name "*cmcc*" -o -name "*xr30*" || echo "⚠️ 未找到 CMCC XR30 文件"
+                echo ""
+                
+                # Check if XR30 firmware was generated
+                if ! find . -name "*cmcc_xr30*sysupgrade.bin" | grep -q .; then
+                    echo "❌ 警告：未找到 CMCC XR30 升级固件"
+                    echo "📋 所有生成的 .bin 文件："
+                    find . -name "*.bin" | head -10
+                    echo ""
+                fi
+                
                 rm -rf packages
                 sudo -E apt-get -qq install rename
                 for val in "${devices[@]}"; do
@@ -270,4 +288,8 @@ jobs:
               uses: actions/upload-artifact@main
               with:
                 name: ${{ env.COMPILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.UPLOAD_TAG_NAME }}${{ env.WIFI_INTERFACE }}
-                path: /workdir/openwrt/bin/targets
+                path: |
+                  /workdir/openwrt/bin/targets/*/*/*.bin
+                  /workdir/openwrt/bin/targets/*/*/*.manifest
+                  /workdir/openwrt/bin/targets/*/*/sha256sums
+                  /workdir/openwrt/bin/targets/*/*/*buildinfo
