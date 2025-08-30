@@ -131,6 +131,7 @@ config_package_add fish
 config_package_add luci-app-usb3disable
 ## USB
 # config_package_add kmod-usb-net-huawei-cdc-ncm
+config_package_add usbutils
 config_package_add kmod-usb-net
 config_package_add kmod-usb-net-rndis
 config_package_add kmod-usb-net-ipheth
