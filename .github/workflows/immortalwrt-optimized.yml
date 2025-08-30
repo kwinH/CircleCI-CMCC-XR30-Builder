@@ -54,6 +54,11 @@ on:
                 required: false
                 default: true
                 type: boolean
+            CUSTOM_LAN_IP:
+                description: 'Custom LAN IP address (default: 192.168.3.1, replaces ImmortalWrt default 192.168.6.1)'
+                required: false
+                default: '192.168.3.1'
+                type: string
 
 env:
     TZ: Asia/Shanghai
@@ -64,7 +69,7 @@ env:
     FEEDS_CONF: feeds.conf.default
     # CONFIG_FILE: .config
     DIY_P1_SH: diy-part1.sh
-    DIY_P2_SH: diy-part2-optimized.sh
+    DIY_P2_SH: diy-part2.sh
     
     # Optimization flags
     ENABLE_LTO: ${{ github.event.inputs.ENABLE_LTO || 'true' }}
@@ -76,6 +81,7 @@ env:
     ENABLE_DPDK: ${{ github.event.inputs.ENABLE_DPDK || 'false' }}
     ENABLE_LOCAL_KMOD: ${{ github.event.inputs.ENABLE_LOCAL_KMOD || 'false' }}
     ENABLE_ADVANCED_OPTIMIZATIONS: ${{ github.event.inputs.ENABLE_ADVANCED_OPTIMIZATIONS || 'true' }}
+    CUSTOM_LAN_IP: ${{ github.event.inputs.CUSTOM_LAN_IP || '192.168.3.1' }}
 
 jobs:
     ImmortalWrt-Builder:
