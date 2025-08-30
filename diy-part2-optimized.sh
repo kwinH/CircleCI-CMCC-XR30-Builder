@@ -339,7 +339,7 @@ EOF
 function setup_custom_lan_ip() {
     local custom_ip="${CUSTOM_LAN_IP:-192.168.3.1}"
     
-    echo "Setting up custom LAN IP: $custom_ip"
+    echo "🌐 Setting up custom LAN IP: $custom_ip"
     
     # Replace ImmortalWrt default IP (192.168.6.1) if different from user input
     if [[ "$custom_ip" != "192.168.6.1" ]]; then
@@ -382,6 +382,177 @@ function setup_custom_lan_ip() {
 }
 
 # ============================================
+# Custom Package Management Functions
+# ============================================
+
+function setup_third_party_packages() {
+    echo "📦 Setting up third-party packages..."
+    
+    # Create custom package directory
+    mkdir -p package/custom
+    
+    # Clone third-party package repository
+    if [ ! -d "package/custom/OpenWrt-Packages" ]; then
+        echo "🌐 Cloning third-party packages..."
+        git clone --depth 1 https://github.com/217heidai/OpenWrt-Packages.git package/custom/OpenWrt-Packages
+    fi
+    
+    # Clean conflicting packages
+    clean_packages package/custom/OpenWrt-Packages
+    
+    # Update golang to latest version
+    if [ -d "package/custom/OpenWrt-Packages/golang" ]; then
+        echo "🔄 Updating golang to latest version..."
+        rm -rf feeds/packages/lang/golang
+        mv package/custom/OpenWrt-Packages/golang feeds/packages/lang/
+    fi
+    
+    # Clone specific apps
+    echo "📱 Setting up specific applications..."
+    
+    # MentoHust for campus network authentication
+    if [ ! -d "package/mentohust" ]; then
+        git clone https://github.com/sbwml/luci-app-mentohust package/mentohust
+    fi
+    
+    # Daed for advanced routing
+    if [ ! -d "package/daed" ]; then
+        git clone https://github.com/QiuSimons/luci-app-daed package/daed
+    fi
+    
+    echo "✅ Third-party packages setup completed"
+}
+
+function configure_unwanted_packages() {
+    echo "🗑️  Removing unwanted packages..."
+    
+    # Remove SSR Plus related packages
+    local ssr_packages=(
+        "luci-app-ssr-plus_INCLUDE_NONE_V2RAY"
+        "luci-app-ssr-plus_INCLUDE_Shadowsocks_NONE_Client"
+        "luci-app-ssr-plus_INCLUDE_ShadowsocksR_NONE_Server"
+        "luci-app-ssr-plus_INCLUDE_ShadowsocksR_Rust_Client"
+        "luci-app-ssr-plus_INCLUDE_ShadowsocksR_Rust_Server"
+    )
+    
+    for package in "${ssr_packages[@]}"; do
+        config_package_del "$package"
+    done
+    
+    # Remove theme packages
+    config_package_del "luci-theme-bootstrap-mod"
+    
+    # Clean shadowsocks packages from custom directory
+    if [ -d "package/custom/OpenWrt-Packages" ]; then
+        rm -rf package/custom/OpenWrt-Packages/shadowsocks-rust 2>/dev/null || true
+        rm -rf package/custom/OpenWrt-Packages/simple-obfs 2>/dev/null || true
+    fi
+    
+    echo "✅ Unwanted packages removed"
+}
+
+function configure_network_packages() {
+    echo "🌐 Configuring network packages..."
+    
+    # Core network utilities
+    config_package_add "curl"                    # HTTP client
+    config_package_add "socat"                   # Network relay tool
+    config_package_add "kmod-tcp-bbr"           # BBR congestion control
+    
+    # Multi-WAN support
+    config_package_add "kmod-macvlan"           # MACVLAN support
+    config_package_add "mwan3"                  # Multi-WAN management
+    config_package_add "luci-app-mwan3"        # Multi-WAN WebUI
+    
+    # USB network adapters
+    local usb_network_packages=(
+        "kmod-usb-net-ipheth"              # iPhone tethering
+        "kmod-usb-net-aqc111"              # AQC111 USB-to-Ethernet
+        "kmod-usb-net-rtl8152-vendor"      # Realtek USB-to-Ethernet
+        "kmod-usb-net-sierrawireless"      # Sierra Wireless modems
+    )
+    
+    for package in "${usb_network_packages[@]}"; do
+        config_package_add "$package"
+    done
+    
+    echo "✅ Network packages configured"
+}
+
+function configure_system_packages() {
+    echo "🖥️  Configuring system packages..."
+    
+    # System management
+    config_package_add "luci-app-ttyd"          # Web Terminal
+    config_package_add "luci-app-autoreboot"    # Auto reboot scheduler
+    config_package_add "luci-app-autotimeset"   # Scheduled tasks
+    config_package_add "luci-lib-ipkg"          # Package manager library
+    
+    # Network tools and binding
+    config_package_add "luci-app-arpbind"       # IP-MAC binding
+    config_package_add "luci-app-wol"           # Wake on LAN
+    config_package_add "qrencode"               # QR code generator
+    
+    # USB support
+    config_package_add "luci-app-usb3disable"   # USB3.0 disable control
+    config_package_add "kmod-usb-storage"       # USB storage support
+    config_package_add "kmod-usb-ohci"          # OHCI USB support
+    config_package_add "kmod-usb-uhci"          # UHCI USB support
+    config_package_add "usb-modeswitch"         # USB modem mode switching
+    config_package_add "sendat"                 # AT command tool
+    
+    # Disk utilities
+    config_package_add "gdisk"                  # GPT disk utility
+    config_package_add "sgdisk"                 # Script-friendly GPT utility
+    
+    # Performance and monitoring
+    config_package_add "iperf"                  # Network performance testing
+    # config_package_add "coremark"             # CPU benchmark (commented out for size)
+    # config_package_add "autocore"             # System info (commented out)
+    # config_package_add "lm-sensors-detect"    # Hardware monitoring (commented out)
+    
+    echo "✅ System packages configured"
+}
+
+function configure_shell_packages() {
+    echo "🐚 Configuring shell and terminal packages..."
+    
+    # Advanced shell environment
+    config_package_add "fish"                   # Fish shell
+    config_package_add "vim-full"               # Full-featured Vim
+    config_package_add "byobu"                  # Terminal multiplexer wrapper
+    config_package_add "tmux"                   # Terminal multiplexer
+    
+    echo "✅ Shell packages configured"
+}
+
+function configure_custom_applications() {
+    echo "📱 Configuring custom applications..."
+    
+    # Campus network authentication
+    config_package_add "luci-app-mentohust"     # MentoHust WebUI
+    
+    # Advanced routing and proxy
+    config_package_add "luci-app-daed"          # Daed WebUI
+    
+    # Optional packages (commented out by default)
+    # config_package_add "luci-app-frpc"        # FRP client
+    # config_package_add "luci-app-mosdns"      # MosDNS
+    
+    # Passwall2 configuration (commented out by default)
+    # if [ "${ENABLE_PASSWALL:-false}" = "true" ]; then
+    #     echo "🔐 Enabling Passwall2..."
+    #     config_package_add "luci-app-passwall2"
+    #     config_package_add "iptables-mod-socket"
+    #     config_package_add "luci-app-passwall2_Iptables_Transparent_Proxy"
+    #     config_package_add "luci-app-passwall2_INCLUDE_Hysteria"
+    #     config_package_del "luci-app-passwall2_Nftables_Transparent_Proxy"
+    # fi
+    
+    echo "✅ Custom applications configured"
+}
+
+# ============================================
 # Main Configuration
 # ============================================
 
@@ -396,18 +567,13 @@ echo "⌚ Device list after fixed..."
 # Theme modification
 sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
 
-# Package management
-echo "🗑️  Removing unwanted packages..."
-config_package_del "luci-app-ssr-plus_INCLUDE_NONE_V2RAY"
-config_package_del "luci-app-ssr-plus_INCLUDE_Shadowsocks_NONE_Client"
-config_package_del "luci-app-ssr-plus_INCLUDE_ShadowsocksR_NONE_Server"
-config_package_del "luci-theme-bootstrap-mod"
-
-echo "📦 Adding custom packages..."
-config_package_add "luci-app-ttyd"    # Web Terminal
-config_package_add "kmod-tcp-bbr"     # BBR congestion control
-config_package_add "curl"             # HTTP client
-config_package_add "netcat"           # Network utility
+# Package management - organized approach
+setup_third_party_packages
+configure_unwanted_packages
+configure_network_packages
+configure_system_packages
+configure_shell_packages
+configure_custom_applications
 
 # ============================================
 # Apply All Optimizations
@@ -449,5 +615,14 @@ echo "  - BPF: ${ENABLE_BPF:-true}"
 echo "  - KERNEL_CLANG_LTO: ${KERNEL_CLANG_LTO:-true}"
 echo "  - USE_GCC14: ${USE_GCC14:-true}"
 echo "  - ADVANCED_OPTIMIZATIONS: ${ENABLE_ADVANCED_OPTIMIZATIONS:-true}"
+
+# Show package statistics
+echo "📦 软件包统计："
+local total_packages=$(grep "CONFIG_PACKAGE.*=y" .config | wc -l)
+local luci_apps=$(grep "CONFIG_PACKAGE_luci-app.*=y" .config | wc -l)
+local kernel_modules=$(grep "CONFIG_PACKAGE_kmod.*=y" .config | wc -l)
+echo "  - 总软件包: $total_packages"
+echo "  - LuCI 应用: $luci_apps" 
+echo "  - 内核模块: $kernel_modules"
 
 echo "🎯 配置验证完成"
