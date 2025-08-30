@@ -177,6 +177,26 @@ config_package_add luci-app-mentohust
 git clone https://github.com/QiuSimons/luci-app-daed package/daed
 config_package_add luci-app-daed
 
+# Configure kernel options for Daed (eBPF support)
+echo "🔧 Configuring kernel options for Daed eBPF support..."
+config_add KERNEL_BPF
+config_add KERNEL_BPF_SYSCALL
+config_add KERNEL_BPF_JIT
+config_add KERNEL_CGROUPS
+config_add KERNEL_KPROBES
+config_add KERNEL_NET_INGRESS
+config_add KERNEL_NET_EGRESS
+config_add KERNEL_NET_SCH_INGRESS
+config_add KERNEL_NET_CLS_BPF
+config_add KERNEL_NET_CLS_ACT
+config_add KERNEL_BPF_STREAM_PARSER
+config_add KERNEL_DEBUG_INFO
+config_del KERNEL_DEBUG_INFO_REDUCED
+config_add KERNEL_DEBUG_INFO_BTF
+config_add KERNEL_KPROBE_EVENTS
+config_add KERNEL_BPF_EVENTS
+echo "✅ Daed kernel configuration completed"
+
 # Third-party packages
 mkdir -p package/custom
 git clone --depth 1  https://github.com/217heidai/OpenWrt-Packages.git package/custom
