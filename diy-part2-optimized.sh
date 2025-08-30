@@ -672,4 +672,5 @@ echo "  - 总软件包: $total_packages"
 echo "  - LuCI 应用: $luci_apps" 
 echo "  - 内核模块: $kernel_modules"
 
+cat .config
 echo "🎯 配置验证完成"
