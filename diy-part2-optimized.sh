@@ -222,7 +222,6 @@ function apply_build_optimizations() {
         config_del "KERNEL_DEBUG_INFO_REDUCED"
         config_add "KERNEL_DEBUG_INFO_BTF"
         config_add "KERNEL_DEBUG_INTO_BTF_MODULES"
-        config_del "KERNEL_DEBUG_INFO_REDUCED"
         config_add "KERNEL_MODULE_ALLOW_BTF_MISMATCH"
         config_add "KERNEL_XDP_SOCKETS"
         config_add "KERNEL_BPF_STREAM_PARSER"
