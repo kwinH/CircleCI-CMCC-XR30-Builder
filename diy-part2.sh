@@ -134,6 +134,7 @@ config_package_add luci-app-usb3disable
 config_package_add usbutils
 config_package_add kmod-usb-net
 config_package_add kmod-usb-net-rndis
+config_package_add kmod-usb-net-cdc-ether
 config_package_add kmod-usb-net-ipheth
 # config_package_add kmod-usb-net-aqc111
 # config_package_add kmod-usb-net-rtl8152-vendor
@@ -153,9 +154,9 @@ config_package_add kmod-tcp-bbr
 ## autoreboot
 config_package_add luci-app-autoreboot
 ## 多拨
-config_package_add kmod-macvlan
-config_package_add mwan3
-config_package_add luci-app-mwan3
+# config_package_add kmod-macvlan
+# config_package_add mwan3
+# config_package_add luci-app-mwan3
 # ## frpc
 # config_package_add luci-app-frpc
 ## mosdns
@@ -165,8 +166,8 @@ config_package_add curl
 ## socat
 config_package_add socat
 ## disk
-config_package_add gdisk
-config_package_add sgdisk
+# config_package_add gdisk
+config_package_add fdisk
 ## Vim-Full
 config_package_add vim-full
 ## iperf
@@ -182,6 +183,10 @@ config_package_add luci-app-daed
 
 # Configure kernel options for Daed (eBPF support)
 echo "🔧 Configuring kernel options for Daed eBPF support..."
+config_package_add "kmod-xdp-sockets-diag"
+config_package_add "kmod-sched-core"
+config_package_add "kmod-sched-bpf"
+config_package_add "kmod-nft-bridge"
 config_add KERNEL_BPF
 config_add KERNEL_BPF_SYSCALL
 config_add KERNEL_BPF_JIT
@@ -195,7 +200,7 @@ config_add KERNEL_NET_CLS_ACT
 config_add KERNEL_BPF_STREAM_PARSER
 config_add KERNEL_DEBUG_INFO
 config_del KERNEL_DEBUG_INFO_REDUCED
-config_add KERNEL_DEBUG_INFO_BTF
+config_add DEBUG_INFO_BTF
 config_add KERNEL_KPROBE_EVENTS
 config_add KERNEL_BPF_EVENTS
 echo "✅ Daed kernel configuration completed"
