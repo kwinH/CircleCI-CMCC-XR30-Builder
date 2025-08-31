@@ -598,7 +598,7 @@ function configure_custom_applications() {
     # config_package_add "luci-app-frpc"        # FRP client
     # config_package_add "luci-app-mosdns"      # MosDNS
     
-    Passwall2 configuration (commented out by default)
+    # Passwall2 configuration (commented out by default)
     echo "🔐 Enabling Passwall2..."
     config_package_add "luci-app-passwall2"
     # config_package_add "iptables-mod-socket"
