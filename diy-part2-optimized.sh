@@ -414,7 +414,7 @@ function configure_daed_kernel_options() {
     # Debug information for BPF
     config_add "KERNEL_DEBUG_INFO"
     config_del "KERNEL_DEBUG_INFO_REDUCED"
-    config_add "KERNEL_DEBUG_INFO_BTF"
+    config_add "DEBUG_INFO_BTF"
     
     echo "✅ Daed kernel configuration completed"
 }
