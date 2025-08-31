@@ -11,8 +11,14 @@
 function config_del(){
     yes="CONFIG_$1=y"
     no="# CONFIG_$1 is not set"
-
+    
+    # 首先尝试替换已存在的启用配置
     sed -i "s/$yes/$no/" .config
+    
+    # 如果配置项不存在，直接添加禁用配置
+    if ! grep -q "CONFIG_$1" .config; then
+        echo "$no" >> .config
+    fi
 }
 
 function config_add(){
