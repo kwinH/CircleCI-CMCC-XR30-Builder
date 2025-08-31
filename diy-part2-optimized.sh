@@ -207,6 +207,7 @@ function apply_build_optimizations() {
     if [ "${ENABLE_MOLD:-true}" = "true" ]; then
         echo "⚡ Enabling MOLD linker"
         config_add "USE_MOLD"
+        config_add "MOLD"
     fi
     
     # Extended BPF support
@@ -218,15 +219,22 @@ function apply_build_optimizations() {
         config_add "KERNEL_BPF_EVENTS"
         config_add "KERNEL_CGROUP_BPF"
         config_add "KERNEL_DEBUG_INFO"
+        config_del "KERNEL_DEBUG_INFO_REDUCED"
         config_add "KERNEL_DEBUG_INFO_BTF"
+        config_add "KERNEL_DEBUG_INTO_BTF_MODULES"
+        config_add "KERNEL_MODULE_ALLOW_BTF_MISMATCH"
+        config_add "KERNEL_XDP_SOCKETS"  
         config_del "KERNEL_DEBUG_INFO_REDUCED"
         config_add "KERNEL_MODULE_ALLOW_BTF_MISMATCH"
         config_add "KERNEL_XDP_SOCKETS"
+        config_add "KERNEL_BPF_STREAM_PARSER"
+        config_add "KERNEL_NETKIT"
         
         # BPF packages
         config_package_add "kmod-sched-core"
         config_package_add "kmod-sched-bpf"
         config_package_add "kmod-xdp-sockets-diag"
+        config_package_add "libbpf"
     fi
     
     # Linux Random Number Generator (LRNG)
