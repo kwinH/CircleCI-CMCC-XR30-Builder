@@ -184,8 +184,11 @@ git clone https://github.com/sbwml/luci-app-mentohust package/mentohust
 config_package_add luci-app-mentohust
 
 # Daed
-git clone https://github.com/QiuSimons/luci-app-daed package/daed
+if [ ! -d "package/daed" ]; then
+    git clone https://github.com/QiuSimons/luci-app-daed package/daed
+fi
 config_package_add luci-app-daed
+
 
 # Configure kernel options for Daed (eBPF support)
 echo "🔧 Configuring kernel options for Daed eBPF support..."
