@@ -185,6 +185,7 @@ config_package_add luci-app-mentohust
 
 # Daed
 if [ ! -d "package/dae" ]; then
+    mkdir -p Package/libcron && wget -O Package/libcron/Makefile https://raw.githubusercontent.com/immortalwrt/packages/refs/heads/master/libs/libcron/Makefile
     git clone https://github.com/QiuSimons/luci-app-daed package/dae
 fi
 config_package_add luci-app-daed
