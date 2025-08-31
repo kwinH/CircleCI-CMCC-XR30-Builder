@@ -144,50 +144,50 @@ function apply_optimizations_by_level() {
             echo "📦 Basic optimizations: LTO + MOLD"
             export ENABLE_LTO="true"
             export ENABLE_MOLD="true"
-            export ENABLE_BPF="false"
+            # export ENABLE_BPF="false"
             export KERNEL_CLANG_LTO="false"
             export USE_GCC14="false"
-            export ENABLE_LRNG="false"
-            export ENABLE_DPDK="false"
-            export ENABLE_LOCAL_KMOD="false"
+            # export ENABLE_LRNG="false"
+            # export ENABLE_DPDK="false"
+            # export ENABLE_LOCAL_KMOD="false"
             export ENABLE_ADVANCED_OPTIMIZATIONS="false"
             ;;
         "full")
             echo "🚀 Full optimizations: LTO + MOLD + BPF + CLANG LTO + GCC14"
             export ENABLE_LTO="true"
             export ENABLE_MOLD="true"
-            export ENABLE_BPF="true"
+            # export ENABLE_BPF="true"
             export KERNEL_CLANG_LTO="true"
             export USE_GCC14="true"
-            export ENABLE_LRNG="false"
-            export ENABLE_DPDK="false"
-            export ENABLE_LOCAL_KMOD="false"
+            # export ENABLE_LRNG="false"
+            # export ENABLE_DPDK="false"
+            # export ENABLE_LOCAL_KMOD="false"
             export ENABLE_ADVANCED_OPTIMIZATIONS="true"
             ;;
         "advanced")
             echo "⚡ Advanced optimizations: All features enabled"
             export ENABLE_LTO="true"
             export ENABLE_MOLD="true"
-            export ENABLE_BPF="true"
+            # export ENABLE_BPF="true"
             export KERNEL_CLANG_LTO="true"
             export USE_GCC14="true"
-            export ENABLE_LRNG="true"
-            export ENABLE_DPDK="true"
-            export ENABLE_LOCAL_KMOD="true"
+            # export ENABLE_LRNG="true"
+            # export ENABLE_DPDK="true"
+            # export ENABLE_LOCAL_KMOD="true"
             export ENABLE_ADVANCED_OPTIMIZATIONS="true"
             ;;
         "custom")
-            echo "🔧 Custom optimizations: Using individual settings"
+            echo "🔧 Custom optimizations: Using individual settings(useless in 21.02)"
             # Keep current environment variables as set by GitHub Actions
-            if [[ "${ENABLE_ADVANCED_FEATURES}" == "true" ]]; then
-                export ENABLE_LRNG="true"
-                export ENABLE_DPDK="true"
-                export ENABLE_LOCAL_KMOD="true"
-            else
-                export ENABLE_LRNG="false"
-                export ENABLE_DPDK="false"
-                export ENABLE_LOCAL_KMOD="false"
-            fi
+            # if [[ "${ENABLE_ADVANCED_FEATURES}" == "true" ]]; then
+            #     export ENABLE_LRNG="true"
+            #     export ENABLE_DPDK="true"
+            #     export ENABLE_LOCAL_KMOD="true"
+            # else
+            #     export ENABLE_LRNG="false"
+            #     export ENABLE_DPDK="false"
+            #     export ENABLE_LOCAL_KMOD="false"
+            # fi
             ;;
         *)
             echo "⚠️  Unknown optimization level: $optimization_level, using full"
@@ -217,50 +217,50 @@ function apply_build_optimizations() {
         config_add "MOLD"
     fi
     
-    # Extended BPF support
-    if [ "${ENABLE_BPF:-true}" = "true" ]; then
-        echo "🌐 Enabling extended BPF support"
-        config_add "DEVEL"
-        config_add "BPF_TOOLCHAIN_HOST"
-        config_del "BPF_TOOLCHAIN_NONE"
-        config_add "KERNEL_BPF_EVENTS"
-        config_add "KERNEL_CGROUP_BPF"
-        config_add "KERNEL_DEBUG_INFO"
-        config_del "KERNEL_DEBUG_INFO_REDUCED"
-        config_add "KERNEL_DEBUG_INFO_BTF"
-        config_add "KERNEL_DEBUG_INTO_BTF_MODULES"
-        config_add "KERNEL_MODULE_ALLOW_BTF_MISMATCH"
-        config_add "KERNEL_XDP_SOCKETS"
-        config_add "KERNEL_BPF_STREAM_PARSER"
-        config_add "KERNEL_NETKIT"
+    # # Extended BPF support
+    # if [ "${ENABLE_BPF:-true}" = "true" ]; then
+    #     echo "🌐 Enabling extended BPF support"
+    #     config_add "DEVEL"
+    #     config_add "BPF_TOOLCHAIN_HOST"
+    #     config_del "BPF_TOOLCHAIN_NONE"
+    #     config_add "KERNEL_BPF_EVENTS"
+    #     config_add "KERNEL_CGROUP_BPF"
+    #     config_add "KERNEL_DEBUG_INFO"
+    #     config_del "KERNEL_DEBUG_INFO_REDUCED"
+    #     config_add "KERNEL_DEBUG_INFO_BTF"
+    #     config_add "KERNEL_DEBUG_INTO_BTF_MODULES"
+    #     config_add "KERNEL_MODULE_ALLOW_BTF_MISMATCH"
+    #     config_add "KERNEL_XDP_SOCKETS"
+    #     config_add "KERNEL_BPF_STREAM_PARSER"
+    #     config_add "KERNEL_NETKIT"
         
-        # BPF packages
-        config_package_add "kmod-sched-core"
-        config_package_add "kmod-sched-bpf"
-        config_package_add "kmod-xdp-sockets-diag"
-        config_package_add "libbpf"
-    fi
+    #     # BPF packages
+    #     config_package_add "kmod-sched-core"
+    #     config_package_add "kmod-sched-bpf"
+    #     config_package_add "kmod-xdp-sockets-diag"
+    #     config_package_add "libbpf"
+    # fi
     
-    # Linux Random Number Generator (LRNG)
-    if [ "${ENABLE_LRNG:-false}" = "true" ]; then
-        echo "🎲 Enabling Linux Random Number Generator (LRNG)"
-        config_add "KERNEL_LRNG"
-        config_package_del "urandom-seed"
-        config_package_del "urngd"
-    fi
+    # # Linux Random Number Generator (LRNG)
+    # if [ "${ENABLE_LRNG:-false}" = "true" ]; then
+    #     echo "🎲 Enabling Linux Random Number Generator (LRNG)"
+    #     config_add "KERNEL_LRNG"
+    #     config_package_del "urandom-seed"
+    #     config_package_del "urngd"
+    # fi
     
-    # Data Plane Development Kit (DPDK)
-    if [ "${ENABLE_DPDK:-false}" = "true" ]; then
-        echo "🚀 Enabling Data Plane Development Kit (DPDK)"
-        config_package_add "dpdk-tools"
-        config_package_add "numactl"
-    fi
+    # # Data Plane Development Kit (DPDK)
+    # if [ "${ENABLE_DPDK:-false}" = "true" ]; then
+    #     echo "🚀 Enabling Data Plane Development Kit (DPDK)"
+    #     config_package_add "dpdk-tools"
+    #     config_package_add "numactl"
+    # fi
     
-    # Local kernel module support
-    if [ "${ENABLE_LOCAL_KMOD:-false}" = "true" ]; then
-        echo "📦 Enabling local kernel module support"
-        config_add "TARGET_ROOTFS_LOCAL_PACKAGES"
-    fi
+    # # Local kernel module support
+    # if [ "${ENABLE_LOCAL_KMOD:-false}" = "true" ]; then
+    #     echo "📦 Enabling local kernel module support"
+    #     config_add "TARGET_ROOTFS_LOCAL_PACKAGES"
+    # fi
     
     # Enable build acceleration tools
     # config_add "CCACHE"
@@ -353,42 +353,42 @@ function setup_custom_lan_ip() {
     
     echo "🌐 Setting up custom LAN IP: $custom_ip"
     
-    # Replace ImmortalWrt default IP (192.168.6.1) if different from user input
-    if [[ "$custom_ip" != "192.168.6.1" ]]; then
-        echo "Replacing ImmortalWrt default IP (192.168.6.1) with $custom_ip"
+    # Replace ImmortalWrt default IP (192.168.1.1) if different from user input
+    if [[ "$custom_ip" != "192.168.1.1" ]]; then
+        echo "Replacing ImmortalWrt default IP (192.168.1.1) with $custom_ip"
         
         # Find and update config_generate files
         find . -name "config_generate" -type f | while read -r config_file; do
             echo "Updating ImmortalWrt IP in: $config_file"
-            sed -i "s/192.168.6.1/$custom_ip/g" "$config_file"
-        done
-        
-        # Update other files that might contain the ImmortalWrt IP
-        find . -name "*.sh" -o -name "*.conf" -o -name "*.cfg" | xargs grep -l "192.168.6.1" 2>/dev/null | while read -r file; do
-            echo "Updating ImmortalWrt IP in: $file"
-            sed -i "s/192.168.6.1/$custom_ip/g" "$file"
-        done
-    else
-        echo "Keeping ImmortalWrt default IP (192.168.6.1) as requested"
-    fi
-    
-    # Replace standard OpenWrt IP (192.168.1.1) if different from user input
-    if [[ "$custom_ip" != "192.168.1.1" ]]; then
-        echo "Replacing standard OpenWrt IP (192.168.1.1) with $custom_ip"
-        
-        find . -name "config_generate" -type f | while read -r config_file; do
-            echo "Updating OpenWrt IP in: $config_file"
             sed -i "s/192.168.1.1/$custom_ip/g" "$config_file"
         done
         
-        # Update other files that might contain IP addresses
-        find . -name "*.sh" -o -name "*.conf" -o -name "*.cfg" | xargs grep -l "192.168.1.1" 2>/dev/null | while read -r file; do
-            echo "Updating OpenWrt IP in: $file"
-            sed -i "s/192.168.1.1/$custom_ip/g" "$file"
-        done
+        # # Update other files that might contain the ImmortalWrt IP
+        # find . -name "*.sh" -o -name "*.conf" -o -name "*.cfg" | xargs grep -l "192.168.6.1" 2>/dev/null | while read -r file; do
+        #     echo "Updating ImmortalWrt IP in: $file"
+        #     sed -i "s/192.168.6.1/$custom_ip/g" "$file"
+        # done
     else
-        echo "Keeping standard OpenWrt IP (192.168.1.1) as requested"
+        echo "Keeping ImmortalWrt default IP (192.168.1.1) as requested"
     fi
+    
+    # # Replace standard OpenWrt IP (192.168.1.1) if different from user input
+    # if [[ "$custom_ip" != "192.168.1.1" ]]; then
+    #     echo "Replacing standard OpenWrt IP (192.168.1.1) with $custom_ip"
+        
+    #     find . -name "config_generate" -type f | while read -r config_file; do
+    #         echo "Updating OpenWrt IP in: $config_file"
+    #         sed -i "s/192.168.1.1/$custom_ip/g" "$config_file"
+    #     done
+        
+    #     # Update other files that might contain IP addresses
+    #     find . -name "*.sh" -o -name "*.conf" -o -name "*.cfg" | xargs grep -l "192.168.1.1" 2>/dev/null | while read -r file; do
+    #         echo "Updating OpenWrt IP in: $file"
+    #         sed -i "s/192.168.1.1/$custom_ip/g" "$file"
+    #     done
+    # else
+    #     echo "Keeping standard OpenWrt IP (192.168.1.1) as requested"
+    # fi
     
     echo "LAN IP setup completed for: $custom_ip"
 }
@@ -397,39 +397,39 @@ function setup_custom_lan_ip() {
 # Specialized Configuration Functions
 # ============================================
 
-function configure_daed_kernel_options() {
-    echo "🔧 Configuring kernel options for Daed eBPF support..."
+# function configure_daed_kernel_options() {
+#     echo "🔧 Configuring kernel options for Daed eBPF support..."
     
-    # Core BPF support
-    config_add "KERNEL_BPF"
-    config_add "KERNEL_BPF_SYSCALL"
-    config_add "KERNEL_BPF_JIT"
+#     # Core BPF support
+#     config_add "KERNEL_BPF"
+#     config_add "KERNEL_BPF_SYSCALL"
+#     config_add "KERNEL_BPF_JIT"
     
-    # Control Groups support
-    config_add "KERNEL_CGROUPS"
+#     # Control Groups support
+#     config_add "KERNEL_CGROUPS"
     
-    # Kernel probes support
-    config_add "KERNEL_KPROBES"
-    config_add "KERNEL_KPROBE_EVENTS"
+#     # Kernel probes support
+#     config_add "KERNEL_KPROBES"
+#     config_add "KERNEL_KPROBE_EVENTS"
     
-    # Network traffic control
-    config_add "KERNEL_NET_INGRESS"
-    config_add "KERNEL_NET_EGRESS"
-    config_add "KERNEL_NET_SCH_INGRESS"
-    config_add "KERNEL_NET_CLS_BPF"
-    config_add "KERNEL_NET_CLS_ACT"
+#     # Network traffic control
+#     config_add "KERNEL_NET_INGRESS"
+#     config_add "KERNEL_NET_EGRESS"
+#     config_add "KERNEL_NET_SCH_INGRESS"
+#     config_add "KERNEL_NET_CLS_BPF"
+#     config_add "KERNEL_NET_CLS_ACT"
     
-    # BPF stream parser and events
-    config_add "KERNEL_BPF_STREAM_PARSER"
-    config_add "KERNEL_BPF_EVENTS"
+#     # BPF stream parser and events
+#     config_add "KERNEL_BPF_STREAM_PARSER"
+#     config_add "KERNEL_BPF_EVENTS"
     
-    # Debug information for BPF
-    config_add "KERNEL_DEBUG_INFO"
-    config_del "KERNEL_DEBUG_INFO_REDUCED"
-    config_add "KERNEL_DEBUG_INFO_BTF"
+#     # Debug information for BPF
+#     config_add "KERNEL_DEBUG_INFO"
+#     config_del "KERNEL_DEBUG_INFO_REDUCED"
+#     config_add "KERNEL_DEBUG_INFO_BTF"
     
-    echo "✅ Daed kernel configuration completed"
-}
+#     echo "✅ Daed kernel configuration completed"
+# }
 
 # ============================================
 # Custom Package Management Functions
@@ -467,9 +467,9 @@ function setup_third_party_packages() {
     fi
     
     # Daed for advanced routing
-    if [ ! -d "package/daed" ]; then
-        git clone https://github.com/QiuSimons/luci-app-daed package/daed
-    fi
+    # if [ ! -d "package/daed" ]; then
+    #     git clone https://github.com/QiuSimons/luci-app-daed package/daed
+    # fi
     
     echo "✅ Third-party packages setup completed"
 }
@@ -590,10 +590,10 @@ function configure_custom_applications() {
     config_package_add "luci-app-mentohust"     # MentoHust WebUI
     
     # Advanced routing and proxy
-    config_package_add "luci-app-daed"          # Daed WebUI
+    # config_package_add "luci-app-daed"          # Daed WebUI
     
     # Configure kernel options for Daed (eBPF support)
-    configure_daed_kernel_options
+    # configure_daed_kernel_options
     
     # Optional packages (commented out by default)
     # config_package_add "luci-app-frpc"        # FRP client
@@ -602,12 +602,12 @@ function configure_custom_applications() {
     # Passwall2 configuration (commented out by default)
     echo "🔐 Enabling Passwall2..."
     config_package_add "luci-app-passwall2"
-    # config_package_add "iptables-mod-socket"
-    # config_package_add "luci-app-passwall2_Iptables_Transparent_Proxy"
+    config_package_add "iptables-mod-socket"
+    config_package_add "luci-app-passwall2_Iptables_Transparent_Proxy"
     config_package_add "luci-app-passwall2_INCLUDE_Hysteria"
-    config_package_add "luci-app-passwall2_Nftables_Transparent_Proxy"
-    config_package_add "kmod-nft-socket"
-    config_package_add "kmod-nft-tproxy"
+    # config_package_add "luci-app-passwall2_Nftables_Transparent_Proxy"
+    # config_package_add "kmod-nft-socket"
+    # config_package_add "kmod-nft-tproxy"
     
     # Upnp
     config_package_add "luci-app-upnp"
@@ -646,7 +646,7 @@ configure_custom_applications
 echo "🚀 Starting optimization process..."
 
 # First, fix target platform configuration if needed
-fix_target_platform_config
+# fix_target_platform_config
 
 # Apply optimizations based on level
 apply_optimizations_by_level
@@ -675,7 +675,7 @@ grep "CONFIG_TARGET_DEVICE.*=y" .config | sed 's/CONFIG_TARGET_DEVICE_/  - /' | 
 echo "📋 启用的优化功能："
 echo "  - LTO: ${ENABLE_LTO:-true}"
 echo "  - MOLD: ${ENABLE_MOLD:-true}"
-echo "  - BPF: ${ENABLE_BPF:-true}"
+# echo "  - BPF: ${ENABLE_BPF:-true}"
 echo "  - KERNEL_CLANG_LTO: ${KERNEL_CLANG_LTO:-true}"
 echo "  - USE_GCC14: ${USE_GCC14:-true}"
 echo "  - ADVANCED_OPTIMIZATIONS: ${ENABLE_ADVANCED_OPTIMIZATIONS:-true}"
