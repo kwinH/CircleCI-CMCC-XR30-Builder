@@ -184,8 +184,8 @@ git clone https://github.com/sbwml/luci-app-mentohust package/mentohust
 config_package_add luci-app-mentohust
 
 # Daed
-if [ ! -d "package/daed" ]; then
-    git clone https://github.com/QiuSimons/luci-app-daed package/daed
+if [ ! -d "package/dae" ]; then
+    git clone https://github.com/QiuSimons/luci-app-daed package/dae
 fi
 config_package_add luci-app-daed
 
