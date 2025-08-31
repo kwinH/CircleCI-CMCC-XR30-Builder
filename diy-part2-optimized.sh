@@ -608,6 +608,10 @@ function configure_custom_applications() {
     config_package_add "kmod-nft-socket"
     config_package_add "kmod-nft-tproxy"
     
+    # Upnp
+    config_package_add "luci-app-upnp"
+    config_package_add "miniupnpd"
+
     echo "✅ Custom applications configured"
 }
 
