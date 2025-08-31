@@ -18,7 +18,14 @@ echo "🚀 Enhanced DIY-Part2 with build optimizations"
 function config_del(){
     yes="CONFIG_$1=y"
     no="# CONFIG_$1 is not set"
+    
+    # 首先尝试替换已存在的启用配置
     sed -i "s/$yes/$no/" .config
+    
+    # 如果配置项不存在，直接添加禁用配置
+    if ! grep -q "CONFIG_$1" .config; then
+        echo "$no" >> .config
+    fi
 }
 
 function config_add(){
@@ -419,7 +426,7 @@ function configure_daed_kernel_options() {
     # Debug information for BPF
     config_add "KERNEL_DEBUG_INFO"
     config_del "KERNEL_DEBUG_INFO_REDUCED"
-    config_add "DEBUG_INFO_BTF"
+    config_add "KERNEL_DEBUG_INFO_BTF"
     
     echo "✅ Daed kernel configuration completed"
 }
