@@ -448,13 +448,13 @@ function setup_third_party_packages() {
     fi
     
     # Clean conflicting packages
-    clean_packages package/custom/OpenWrt-Packages
+    # clean_packages package/custom/OpenWrt-Packages
     
     # Update golang to latest version
     if [ -d "package/custom/OpenWrt-Packages/golang" ]; then
         echo "🔄 Updating golang to latest version..."
         rm -rf feeds/packages/lang/golang
-        git clone https://github.com/sbwml/packages_lang_golang -b 25.x feeds/packages/lang/golang
+        git clone https://github.com/sbwml/packages_lang_golang -b 21.x feeds/packages/lang/golang
         # mv package/custom/OpenWrt-Packages/golang feeds/packages/lang/
     fi
     
