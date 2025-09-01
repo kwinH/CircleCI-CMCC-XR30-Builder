@@ -497,6 +497,7 @@ function configure_unwanted_packages() {
     
     # Remove theme packages
     config_package_del "luci-theme-bootstrap-mod"
+    config_package_add "luci-theme-argon"
     
     # Clean shadowsocks packages from custom directory
     if [ -d "package/custom/OpenWrt-Packages" ]; then
@@ -514,10 +515,10 @@ function configure_network_packages() {
     config_package_add "curl"                    # HTTP client
     config_package_add "socat"                   # Network relay tool
     config_package_add "kmod-tcp-bbr"           # BBR congestion control
-    config_package_add "kmod-xdp-sockets-diag"
-    config_package_add "kmod-sched-core"
-    config_package_add "kmod-sched-bpf"
-    config_package_add "kmod-nft-bridge"
+    # config_package_add "kmod-xdp-sockets-diag"
+    # config_package_add "kmod-sched-core"
+    # config_package_add "kmod-sched-bpf"
+    # config_package_add "kmod-nft-bridge"
 
     
     # Multi-WAN support
@@ -635,6 +636,7 @@ echo "⌚ Device list after fixed..."
 
 # Theme modification
 sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+cat feeds/luci/collections/luci/Makefile
 
 # Package management - organized approach
 setup_third_party_packages
