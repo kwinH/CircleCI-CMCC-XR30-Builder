@@ -484,6 +484,11 @@ function configure_unwanted_packages() {
         "luci-app-ssr-plus_INCLUDE_ShadowsocksR_NONE_Server"
         "luci-app-ssr-plus_INCLUDE_ShadowsocksR_Rust_Client"
         "luci-app-ssr-plus_INCLUDE_ShadowsocksR_Rust_Server"
+        "luci-app-passwall2_INCLUDE_ShadowsocksR_Libev_Client"
+        "luci-app-passwall2_INCLUDE_Shadowsocks_Libev_Client"
+        "luci-app-passwall2_INCLUDE_Haproxy"
+        "luci-app-passwall2_INCLUDE_Simple_Obfs"
+        
     )
     
     for package in "${ssr_packages[@]}"; do
