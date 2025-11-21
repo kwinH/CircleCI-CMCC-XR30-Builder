@@ -208,6 +208,16 @@ jobs:
                 find dl -size -1024c -exec ls -l {} \;
                 find dl -size -1024c -exec rm -f {} \;
 
+
+            - name: Cache ccache
+              uses: actions/cache@v4
+              with:
+                path: /workdir/openwrt/.ccache
+                key: ${{ runner.os }}-openwrt-ccache-${{ env.REPO_BRANCH }}-${{ github.sha }}
+                # 如果找不到完全匹配的 sha，回退使用最近的缓存
+                restore-keys: |
+                  ${{ runner.os }}-openwrt-ccache-${{ env.REPO_BRANCH }}-
+      
             - name: Compile the firmware
               id: compile
               run: |
