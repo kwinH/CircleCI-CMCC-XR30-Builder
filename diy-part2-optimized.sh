@@ -334,6 +334,10 @@ EOF
         cat >> .config << 'EOF'
 # Kernel compilation with CLANG
 CONFIG_KERNEL_CC="clang"
+# Enable ThinLTO explicitly
+CONFIG_LTO_CLANG_THIN=y
+# Disable Full LTO to be safe
+# CONFIG_LTO_CLANG_FULL is not set
 EOF
         config_package_del "kselftests-bpf"
         
@@ -616,8 +620,9 @@ function configure_shell_packages() {
     echo "🐚 Configuring shell and terminal packages..."
     
     # Advanced shell environment
-    config_package_add "zsh"                   # Fish shell
-    config_package_add "vim-full"               # Full-featured Vim
+    config_package_add "zsh"                   # Zsh shell
+    # config_package_add "vim-full"               # Full-featured Vim
+    config_package_add "micro"                  #
     config_package_add "byobu"                  # Terminal multiplexer wrapper
     config_package_add "tmux"                   # Terminal multiplexer
     
