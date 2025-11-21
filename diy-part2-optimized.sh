@@ -310,6 +310,14 @@ function apply_compiler_optimizations() {
     export CFLAGS="-O3 -pipe"
     export CXXFLAGS="-O3 -pipe" 
     export LDFLAGS="-Wl,-O1,--as-needed"
+
+    if [ -n "$GITHUB_ENV" ]; then
+        echo "HOST_CFLAGS=-O3 -pipe" >> "$GITHUB_ENV"
+        echo "HOST_CXXFLAGS=-O3 -pipe" >> "$GITHUB_ENV"
+        echo "CFLAGS=-O3 -pipe" >> "$GITHUB_ENV"
+        echo "CXXFLAGS=-O3 -pipe" >> "$GITHUB_ENV"
+        echo "LDFLAGS=-Wl,-O1,--as-needed" >> "$GITHUB_ENV"
+    fi
     
     # Add persistent config settings
     cat >> .config << 'EOF'
