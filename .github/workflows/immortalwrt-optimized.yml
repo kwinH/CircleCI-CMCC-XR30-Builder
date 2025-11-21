@@ -212,6 +212,7 @@ jobs:
               id: compile
               run: |
                 cd openwrt
+                echo "DEBUG: HOST_CFLAGS is $HOST_CFLAGS"
                 CORES=$(nproc)
                 JOBS=$((CORES + 1))
                 
