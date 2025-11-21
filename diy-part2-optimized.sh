@@ -484,6 +484,11 @@ function setup_third_party_packages() {
     if [ ! -d "package/daed" ]; then
         git clone https://github.com/QiuSimons/luci-app-daed package/daed
     fi
+
+    # luci-app-usb3disable
+    if [ ! -d "package/luci-app-usb3disable" ]; then
+        git clone https://github.com/rufengsuixing/luci-app-usb3disable package/luci-app-usb3disable
+    fi
     
     echo "✅ Third-party packages setup completed"
 }
@@ -601,7 +606,8 @@ function configure_system_packages() {
     config_package_add "kmod-usb-uhci"          # UHCI USB support
     config_package_add "usb-modeswitch"         # USB modem mode switching
     config_package_add "sendat"                 # AT command tool
-    
+    config_package_add "luci-app-usb3disable"   # luci-app-usb3disable
+
     # Disk utilities
     config_package_add "fdisk"                  # GPT disk utility
     #config_package_add "sgdisk"                 # Script-friendly GPT utility
