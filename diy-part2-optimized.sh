@@ -502,6 +502,8 @@ function configure_unwanted_packages() {
         "shadowsocksr-libev-ssr-local"
         "shadowsocksr-libev-ssr-redir"
         "v2ray-plugin"
+        "v2ray-geoip"
+        "v2ray-geosite"
     )
     
     for package in "${passwall_ssr_packages[@]}"; do
