@@ -670,6 +670,13 @@ function configure_custom_applications() {
     echo "✅ Custom applications configured"
 }
 
+function configure_default_shell() {
+    echo "🐠 Installing Fish and setting as default..."
+    config_package_add "fish"
+    # 修改 /etc/passwd 中的 root 用户 shell
+    sed -i 's|root:x:0:0:root:/root:/bin/ash|root:x:0:0:root:/root:/usr/bin/fish|g' package/base-files/files/etc/passwd
+}
+
 # ============================================
 # Main Configuration
 # ============================================
@@ -710,11 +717,8 @@ apply_build_optimizations
 apply_mt7981_optimizations  
 apply_compiler_optimizations
 
-# Fish Shell Setup
-echo "🐠 Installing Fish and setting as default..."
-config_package_add "fish"
-# 修改 /etc/passwd 中的 root 用户 shell
-sed -i 's|root:x:0:0:root:/root:/bin/ash|root:x:0:0:root:/root:/usr/bin/fish|g' package/base-files/files/etc/passwd
+# Configure Default Shell
+configure_default_shell
 
 # Setup custom LAN IP
 setup_custom_lan_ip
