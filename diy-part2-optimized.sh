@@ -263,7 +263,9 @@ function apply_build_optimizations() {
     fi
     
     # Enable build acceleration tools
-    # config_add "CCACHE"
+    echo "⚡ Enabling CCache..."
+    echo "CONFIG_CCACHE=y" >> .config
+    echo "CONFIG_CCACHE_DIR=\"/workdir/openwrt/.ccache\"" >> .config
     
     echo "✅ Build optimizations applied"
 }
@@ -281,7 +283,7 @@ function apply_mt7981_optimizations() {
 # ARM64 Cortex-A53 optimizations with extensions
 CONFIG_TARGET_OPTIMIZATION="-O3 -pipe -mcpu=cortex-a53+crc+crypto"
 CONFIG_EXTRA_OPTIMIZATION="-ffunction-sections -fdata-sections"
-CONFIG_KERNEL_CFLAGS="-march=armv8-a+crc+crypto -mcpu=cortex-a53+crc+crypto -mtune=cortex-a53"
+CONFIG_KERNEL_CFLAGS="-march=armv8-a+crc+crypto -mcpu=cortex-a53+crc+crypto -mtune=cortex-a53 -fgraphite-identity -floop-nest-optimize"
 # ZLIB performance optimization
 CONFIG_ZLIB_OPTIMIZE_SPEED=y
 EOF
@@ -325,7 +327,7 @@ function apply_compiler_optimizations() {
 CONFIG_HOST_CFLAGS="-O3 -pipe"
 CONFIG_HOST_CXXFLAGS="-O3 -pipe"
 # Global build optimization
-CONFIG_CCACHE=n
+# CONFIG_CCACHE=n
 EOF
     
     # Kernel CLANG LTO if requested (only affects kernel compilation)
