@@ -283,7 +283,7 @@ function apply_mt7981_optimizations() {
 # ARM64 Cortex-A53 optimizations with extensions
 CONFIG_TARGET_OPTIMIZATION="-O3 -pipe -mcpu=cortex-a53+crc+crypto"
 CONFIG_EXTRA_OPTIMIZATION="-ffunction-sections -fdata-sections"
-CONFIG_KERNEL_CFLAGS="-march=armv8-a+crc+crypto -mcpu=cortex-a53+crc+crypto -mtune=cortex-a53 -fgraphite-identity -floop-nest-optimize"
+CONFIG_KERNEL_CFLAGS="-march=armv8-a+crc+crypto -mcpu=cortex-a53+crc+crypto -mtune=cortex-a53"
 # ZLIB performance optimization
 CONFIG_ZLIB_OPTIMIZE_SPEED=y
 EOF
