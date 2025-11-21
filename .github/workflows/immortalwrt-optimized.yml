@@ -116,7 +116,7 @@ jobs:
               run: |
                 sudo -E apt-get -qq update
                 # Install build dependencies including mold
-                sudo apt-get install golang-go mold -y
+                sudo apt-get install golang-go mold libisl-dev -y
                 sudo bash -c 'bash <(curl -s https://build-scripts.immortalwrt.org/init_build_environment.sh)'
                 
                 # Install additional optimization tools
