@@ -565,9 +565,9 @@ function configure_network_packages() {
 
     
     # Multi-WAN support
-    config_package_add "kmod-macvlan"           # MACVLAN support
-    config_package_add "mwan3"                  # Multi-WAN management
-    config_package_add "luci-app-mwan3"        # Multi-WAN WebUI
+    # config_package_add "kmod-macvlan"           # MACVLAN support
+    # config_package_add "mwan3"                  # Multi-WAN management
+    # config_package_add "luci-app-mwan3"        # Multi-WAN WebUI
     
     # USB network adapters
     local usb_network_packages=(
