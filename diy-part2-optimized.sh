@@ -619,7 +619,7 @@ function configure_system_packages() {
     # config_package_add "lm-sensors-detect"    # Hardware monitoring (commented out)
 
     # Theme Argon
-    # config_package_add "luci-theme-argon"
+    config_package_add "luci-theme-argon"
     
     echo "✅ System packages configured"
 }
