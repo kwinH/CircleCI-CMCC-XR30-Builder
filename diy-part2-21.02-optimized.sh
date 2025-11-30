@@ -636,7 +636,8 @@ echo "✅ Configured for XR30 (H layout) only"
 echo "⌚ Device list after fixed..." 
 
 # Theme modification
-sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+# sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' $(find ./feeds/luci/collections/ -type f -name "Makefile")
 cat feeds/luci/collections/luci/Makefile
 
 # Package management - organized approach
