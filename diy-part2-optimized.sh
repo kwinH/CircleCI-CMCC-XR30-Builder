@@ -520,8 +520,8 @@ function configure_unwanted_packages() {
     local passwall_ssr_packages=(
         "luci-app-passwall2_INCLUDE_ShadowsocksR_Libev_Client"
         "luci-app-passwall2_INCLUDE_Haproxy"
-        "luci-app-passwall2_INCLUDE_Shadowsocks_Libev_Client"
-        "luci-app-passwall2_INCLUDE_Shadowsocks_Rust_Client"
+        # "luci-app-passwall2_INCLUDE_Shadowsocks_Libev_Client"
+        # "luci-app-passwall2_INCLUDE_Shadowsocks_Rust_Client"
         "luci-app-passwall2_INCLUDE_Simple_Obfs"
         "luci-app-passwall2_INCLUDE_V2ray_Plugin"
         "shadowsocks-libev-ss-local"
@@ -677,6 +677,109 @@ function configure_custom_applications() {
     echo "✅ Custom applications configured"
 }
 
+# 添加新的软件包配置函数
+function configure_additional_packages() {
+    echo "📦 Configuring additional packages..."
+
+    ## AdGuard Home
+    config_package_add luci-app-adguardhome
+
+    ## 网络存储
+    config_package_add luci-app-samba4
+    config_package_add luci-app-minidlna
+
+    ## 网络监控
+    config_package_add luci-app-wrtbwmon
+    config_package_add luci-app-nlbwmon
+
+    ## 网络工具
+    config_package_add luci-app-natmap
+    config_package_add luci-app-p910nd
+
+    ## 系统工具
+    config_package_add luci-app-filetransfer
+    config_package_add luci-app-ramfree
+
+    ## 网络加速
+    config_package_add luci-app-turboacc
+
+    ## 网络安全
+    config_package_add luci-app-firewall4
+
+    ## 网络分析
+    config_package_add luci-app-netdata
+
+    ## 配置应用商店
+    config_package_add luci-app-store
+
+    ## 应用过滤和管理
+    config_package_add luci-app-appfilter
+
+    ## 网络延迟监控
+    config_package_add luci-app-apinger
+
+    ## 支持系统在线升级
+    config_package_add luci-app-attendedsysupgrade
+
+    # 配置DDNS-Go
+    config_package_add luci-app-ddns-go
+
+    # Docker容器管理
+    config_package_add docker
+    config_package_add luci-app-dockerman
+
+    ## 网络速度测试
+    config_package_add luci-app-netspeedtest
+
+    ## 配置ZeroTier虚拟网络
+    config_package_add luci-app-zerotier
+
+    # 设备重启和切换固件
+    config_package_add luci-app-advanced-reboot
+
+    # 基于IP的访问控制
+    config_package_add luci-app-banip
+
+    # 磁盘管理
+    config_package_add luci-app-diskman
+
+    # 文件管理助手
+    config_package_add luci-app-fileassistant
+
+    # 用于配置和管理 iStoreX 存储解决方案
+    config_package_add luci-app-istorex
+
+    # 在线用户查看
+    config_package_add luci-app-onliner
+
+    # 设备关机
+    config_package_add luci-app-poweroff
+
+    # qBittorrent
+    config_package_add luci-app-qbittorrent
+
+    # 配置和管理 PPPoE 服务器
+    config_package_add luci-app-pppoe-server
+
+    # 配置QoS流量管理
+    config_package_add luci-app-qos
+
+    # 解锁网易云音乐服务
+    config_package_add luci-app-unblockneteasemusic
+
+    # 配置系统统计信息
+    config_package_add luci-app-statistics
+
+    # 配置网页访问限制
+    config_package_add luci-app-webrestriction
+
+    # 配置网页URL过滤
+    config_package_add luci-app-weburl
+
+    echo "✅ Additional packages configured"
+}
+
+
 function configure_default_shell() {
     echo "🐠 Installing Fish and setting as default..."
     config_package_add "fish"
@@ -706,6 +809,7 @@ configure_network_packages
 configure_system_packages
 configure_shell_packages
 configure_custom_applications
+configure_additional_packages
 
 # ============================================
 # Apply All Optimizations
