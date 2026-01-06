@@ -1,0 +1,99 @@
+name: Generate GPT.bin Only
+
+on:
+  workflow_dispatch:
+    inputs:
+      FLASH_SIZE_MB:
+        description: 'Total flash size in MB (建议: 128/256/512/1024)'
+        required: true
+        default: '1024'
+        type: string
+      FIRMWARE_SIZE_MB:
+        description: 'Firmware partition size in MB (需小于总闪存)'
+        required: true
+        default: '200'
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      SECTOR_SIZE: 512       # sgdisk 默认扇区大小
+      ALIGN_SECTORS: 2048    # NAND 闪存对齐要求（1MB）
+      HARDWARE_RESERVED_MB: 2 # 硬件固化分区总大小（MB）
+
+    steps:
+      # 仅拉取工作流配置（无需克隆ImmortalWrt源码，因为只生成GPT）
+      - name: Checkout
+        uses: actions/checkout@main
+
+      # 仅安装gdisk（生成GPT所需的核心工具，删除其他编译依赖）
+      - name: Install Only Gdisk
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gdisk
+          sudo apt-get clean
+
+      # 核心步骤：生成GPT.bin（保留分区计算逻辑，移除设备树修改）
+      - name: Generate GPT.bin
+        env:
+          FLASH_SIZE_MB: ${{ github.event.inputs.FLASH_SIZE_MB }}
+          FIRMWARE_SIZE_MB: ${{ github.event.inputs.FIRMWARE_SIZE_MB }}
+        run: |
+          # 校验输入合法性
+          if ! [[ "$FLASH_SIZE_MB" =~ ^[0-9]+$ && "$FIRMWARE_SIZE_MB" =~ ^[0-9]+$ ]]; then
+            echo "❌ 错误：闪存大小必须为数字"
+            exit 1
+          fi
+          
+          # 预留硬件分区空间后校验
+          AVAILABLE_MB=$(( FLASH_SIZE_MB - HARDWARE_RESERVED_MB ))
+          if [ $FIRMWARE_SIZE_MB -ge $AVAILABLE_MB ]; then
+            echo "❌ 错误：Firmware分区大小不能超过可用闪存（总闪存-$HARDWARE_RESERVED_MB MB）"
+            echo "  总闪存：$FLASH_SIZE_MB MB，硬件预留：$HARDWARE_RESERVED_MB MB，可用：$AVAILABLE_MB MB"
+            exit 1
+          fi
+
+          # 转换为扇区数
+          FLASH_SECTORS=$(( FLASH_SIZE_MB * 1024 * 1024 / SECTOR_SIZE ))
+          FIRMWARE_SECTORS=$(( FIRMWARE_SIZE_MB * 1024 * 1024 / SECTOR_SIZE ))
+          HARDWARE_RESERVED_SECTORS=$(( HARDWARE_RESERVED_MB * 1024 * 1024 / SECTOR_SIZE ))
+
+          # 计算Firmware分区起止扇区（对齐+避硬件预留区）
+          FIRMWARE_START=$(( (HARDWARE_RESERVED_SECTORS + ALIGN_SECTORS - 1) / ALIGN_SECTORS * ALIGN_SECTORS ))
+          FIRMWARE_END=$(( FIRMWARE_START + FIRMWARE_SECTORS - 1 ))
+
+          # 最终校验
+          if [ $FIRMWARE_END -ge $FLASH_SECTORS ]; then
+            echo "❌ 错误：Firmware分区超出总闪存范围"
+            echo "  Firmware结束扇区：$FIRMWARE_END，总闪存扇区：$FLASH_SECTORS"
+            exit 1
+          fi
+
+          # 打印分区规划
+          echo "✅ 分区扇区规划："
+          echo "  总闪存: ${FLASH_SIZE_MB}MB（${FLASH_SECTORS}扇区）"
+          echo "  硬件预留: 0-${HARDWARE_RESERVED_SECTORS}（${HARDWARE_RESERVED_MB}MB）→ 包含GPT表头+bl2+uboot+reserved"
+          echo "  firmware: ${FIRMWARE_START}-${FIRMWARE_END}（${FIRMWARE_SECTORS}扇区）→ 对齐到${ALIGN_SECTORS}扇区"
+
+          # 生成gpt.bin文件
+          mkdir -p output  # 统一输出目录
+          GPT_BIN="output/gpt.bin"
+          rm -f "$GPT_BIN"  # 删除旧文件
+          truncate -s ${FLASH_SIZE_MB}M "$GPT_BIN"
+
+          # 创建GPT分区表（仅firmware分区）
+          sgdisk "$GPT_BIN" \
+            --clear \
+            --new=1:${FIRMWARE_START}:${FIRMWARE_END} --change-name=1:"firmware" --typecode=1:5B193300-FC78-40CD-8002-E86C45580B47
+
+          # 验证分区表
+          echo -e "\n=== 最终GPT分区表 ==="
+          sgdisk -p "$GPT_BIN" || echo "⚠️ 分区表验证警告（非致命）"
+
+      # 仅上传gpt.bin文件
+      - name: Upload GPT.bin
+        uses: actions/upload-artifact@v4
+        with:
+          name: gpt-bin
+          path: output/gpt.bin
