@@ -79,7 +79,7 @@ env:
 
 jobs:
     ImmortalWrt-Builder-Optimized:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
 
         steps:
             - name: Checkout
@@ -145,6 +145,32 @@ jobs:
                 
                 echo "status=success" >> $GITHUB_OUTPUT
 
+            - name: Enhanced disk space cleanup
+              run: |
+                echo "📊 Disk usage before enhanced cleanup:"
+                df -hT
+                
+                # 清理 Docker 相关文件
+                docker system prune -af || true
+                sudo rm -rf /var/lib/docker || true
+                
+                # 清理 apt 缓存
+                sudo apt-get clean
+                sudo rm -rf /var/lib/apt/lists/*
+                
+                # 清理其他可能的大文件
+                sudo rm -rf /opt/hostedtoolcache || true
+                sudo rm -rf /usr/share/dotnet || true
+                sudo rm -rf /opt/ghc || true
+                sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+                
+                # 清理 npm/yarn 缓存
+                sudo rm -rf ~/.npm || true
+                sudo rm -rf ~/.cache/yarn || true
+                
+                echo "📊 Disk usage after enhanced cleanup:"
+                df -hT
+
             - name: Clone source code
               id: clone
               if: steps.init.outcome == 'success' && !cancelled()
@@ -192,6 +218,8 @@ jobs:
                 sed -i 's/CONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y/CONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y/g' .config
                 sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
                 sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
+                echo "查看.config内容："
+                cat .config
 
             - name: Download package
               id: package
@@ -207,17 +235,33 @@ jobs:
                 make download -j${JOBS}
                 find dl -size -1024c -exec ls -l {} \;
                 find dl -size -1024c -exec rm -f {} \;
+               
+                # 检查下载目录大小
+                echo "📦 Download directory size:"
+                du -sh dl/
+                
+                # 清理构建目录中可能存在的临时文件
+                find build_dir -name "*.o" -delete 2>/dev/null || true
+                find build_dir -name "*.a" -delete 2>/dev/null || true
 
+            - name: Cache ccache
+              uses: actions/cache@v4
+              with:
+                path: /mnt/.openwrt_ccache
+                key: ${{ runner.os }}-openwrt-ccache-${{ env.REPO_BRANCH }}-${{ github.sha }}
+                # 如果找不到完全匹配的 sha，回退使用最近的缓存
+                restore-keys: |
+                  ${{ runner.os }}-openwrt-ccache-${{ env.REPO_BRANCH }}-
 
-            # - name: Cache ccache
-            #   uses: actions/cache@v4
-            #   with:
-            #     path: /workdir/openwrt/.ccache
-            #     key: ${{ runner.os }}-openwrt-ccache-${{ env.REPO_BRANCH }}-${{ github.sha }}
-            #     # 如果找不到完全匹配的 sha，回退使用最近的缓存
-            #     restore-keys: |
-            #       ${{ runner.os }}-openwrt-ccache-${{ env.REPO_BRANCH }}-
-      
+            - name: Check space before compilation
+              run: |    
+                echo "🔍 Disk usage before compilation:"
+                df -hT
+                echo "📁 Free space in workdir:"
+                du -sh /workdir || true
+                echo "📦 Free space in openwrt directory:"
+                du -sh /workdir/openwrt || true 
+
             - name: Compile the firmware
               id: compile
               run: |
@@ -240,9 +284,24 @@ jobs:
                 # Record build start time
                 BUILD_START=$(date +%s)
                 
+                # 定期检查磁盘空间的后台任务
+                (
+                  while pgrep -f "make.*-j" > /dev/null; do
+                    sleep 120  # 每2分钟检查一次
+                    echo "🔍 Disk usage during compilation (timestamp: $(date)):"
+                    df -hT | head -2
+                    # 如果磁盘使用率超过90%，发出警告
+                    usage=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+                    if [ "$usage" -gt 90 ]; then
+                      echo "⚠️  WARNING: Disk usage is at ${usage}%, may cause build failure!"
+                      # 尝试清理一些临时文件
+                      find /tmp -name "tmp-*" -type d -mmin +10 -exec rm -rf {} + 2>/dev/null || true
+                    fi
+                  done
+                ) &                
+                
                 # Optimized build process
-                # make -j${JOBS} V=s || make -j1 || make -j1 V=s
-                make -j${JOBS}|| make -j1 || make -j1
+                make -j${JOBS} V=s || make -j1 || make -j1 V=s
                 
                 # Calculate build time
                 BUILD_END=$(date +%s)
@@ -258,6 +317,101 @@ jobs:
                 fi
                 echo "COMPILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
                 echo "status=success" >> $GITHUB_OUTPUT
+
+            # ==============================================
+            # 核心新增：编译失败后执行磁盘空间检查 + 日志收集
+            # ==============================================
+            - name: Collect debug info on failure (Disk Space + Logs)
+              id: collect-debug
+              if: failure()  # 只有前面步骤失败时才执行
+              run: |
+                echo "=============================================="
+                echo "❌ Build failed! Collecting debug information..."
+                echo "=============================================="
+                
+                # 1. 检查磁盘空间（关键：排查磁盘不足问题）
+                echo "📊 Disk Space Usage:"
+                df -hT
+                echo ""
+                
+                # 2. 检查内存和交换空间（关键：排查OOM问题）
+                echo "📊 Memory & Swap Usage:"
+                free -h
+                echo ""
+
+                # 编译器信息
+                echo "🔍 Compiler Info:"
+                gcc --version
+                cc --version
+                which gcc
+                which cc
+                echo ""          
+                
+                # 3. 检查当前工作目录权限（修复：先判断目录是否存在）
+                echo "🔍 Work Directory Permissions:"
+                if [ -d "/workdir" ]; then
+                  ls -la /workdir
+                else
+                  echo "⚠️ /workdir does not exist (initialization step failed)"
+                fi
+                echo ""
+                
+                # 4. 创建日志目录
+                mkdir -p $GITHUB_WORKSPACE/debug-logs
+                
+                # 5. 收集 m4 工具的 config.log（关键：排查 tools/m4 编译失败）
+                echo "📄 Collecting m4 config.log..."
+                if [ -d "/workdir/openwrt" ]; then
+                  M4_CONFIG_LOG=$(find /workdir/openwrt/build_dir/host/m4-* -name config.log 2>/dev/null | head -1)
+                  if [ -f "$M4_CONFIG_LOG" ]; then
+                    cp "$M4_CONFIG_LOG" $GITHUB_WORKSPACE/debug-logs/m4-config.log
+                    echo "✅ m4 config.log collected"
+                  else
+                    echo "⚠️ m4 config.log not found"
+                    echo "m4 config.log not found" > $GITHUB_WORKSPACE/debug-logs/m4-config.log
+                  fi
+                else
+                  echo "⚠️ /workdir/openwrt does not exist (clone step failed)"
+                  echo "m4 config.log not available (source code not cloned)" > $GITHUB_WORKSPACE/debug-logs/m4-config.log
+                fi
+                
+                # 6. 收集编译过程中的关键日志（如果存在）
+                echo "📄 Collecting build logs..."
+                if [ -d "/workdir/openwrt" ]; then
+                  find /workdir/openwrt -name "*.log" -type f -size -10M | head -10 | xargs -I {} cp {} $GITHUB_WORKSPACE/debug-logs/ 2>/dev/null || true
+                else
+                  echo "⚠️ No build logs available (source code not cloned)"
+                fi
+                
+                # 7. 收集 .config 文件（排查配置错误）
+                echo "📄 Collecting .config file..."
+                if [ -f "/workdir/openwrt/.config" ]; then
+                  cp /workdir/openwrt/.config $GITHUB_WORKSPACE/debug-logs/.config
+                else
+                  echo "⚠️ .config file not found (config step failed)"
+                  echo ".config file not available" > $GITHUB_WORKSPACE/debug-logs/.config
+                fi
+                
+                # 8. 收集磁盘空间和内存使用情况的日志
+                echo "📄 Saving system info to log..."
+                df -hT > $GITHUB_WORKSPACE/debug-logs/disk-space.log
+                free -h > $GITHUB_WORKSPACE/debug-logs/memory.log
+                
+                # 9. 列出收集到的日志文件
+                echo "📋 Collected debug logs:"
+                ls -la $GITHUB_WORKSPACE/debug-logs
+                echo ""
+                          
+                echo "✅ Debug information collection completed"
+
+            # 核心新增：上传调试日志到 Artifacts（失败后可下载）
+            - name: Upload debug logs on failure
+              if: failure() && steps.collect-debug.outcome == 'success'
+              uses: actions/upload-artifact@main
+              with:
+                name: debug-logs-${{ github.run_id }}
+                path: $GITHUB_WORKSPACE/debug-logs/
+                retention-days: 7  # 日志保留7天
 
             - name: Check space usage
               if: (!cancelled())
