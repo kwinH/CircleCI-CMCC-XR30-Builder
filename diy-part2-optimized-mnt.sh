@@ -678,7 +678,54 @@ function configure_custom_applications() {
 }
 
 # 添加新的软件包配置函数
-function configure_additional_packages() {
+function configure_additional_packages_bak() {
+    echo "📦 Configuring additional packages..."
+
+    ## AdGuard Home
+    #config_package_add luci-app-adguardhome
+
+    ## 网络存储
+    config_package_add luci-app-samba4
+    config_package_add luci-app-minidlna
+
+    ## 配置应用商店
+    config_package_add luci-app-store
+
+    ## 应用过滤和管理
+    config_package_add luci-app-appfilter
+
+    ## 网络延迟监控
+    config_package_add luci-app-apinger
+
+    # Docker容器管理
+    config_package_add docker
+    config_package_add luci-app-dockerman
+
+    # 设备重启和切换固件
+    config_package_add luci-app-advanced-reboot
+
+    # 基于IP的访问控制
+    config_package_add luci-app-banip
+
+    # 磁盘管理
+    config_package_add luci-app-diskman
+
+    # 文件管理助手
+    config_package_add luci-app-fileassistant
+
+    # 在线用户查看
+    config_package_add luci-app-onliner
+
+    # 配置和管理 PPPoE 服务器
+    config_package_add luci-app-pppoe-server
+
+    # 配置系统统计信息
+    config_package_add luci-app-statistics
+
+    echo "✅ Additional packages configured"
+}
+
+function configure_additional_packages_bak() {
     echo "📦 Configuring additional packages..."
 
     ## AdGuard Home
