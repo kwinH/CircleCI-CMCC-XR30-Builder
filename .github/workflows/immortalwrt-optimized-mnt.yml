@@ -218,7 +218,33 @@ jobs:
                 sed -i 's/CONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y/CONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y/g' .config
                 sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
                 sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
+              
+
+                # 1. 关闭内核调试信息（关键！减少临时文件和固件体积）
+                sed -i 's/CONFIG_KERNEL_DEBUG_INFO=y/CONFIG_KERNEL_DEBUG_INFO=n/' .config
+                sed -i 's/CONFIG_KERNEL_DEBUG_INFO_BTF=y/CONFIG_KERNEL_DEBUG_INFO_BTF=n/' .config
+                sed -i 's/CONFIG_KERNEL_DEBUG_INTO_BTF_MODULES=y/CONFIG_KERNEL_DEBUG_INTO_BTF_MODULES=n/' .config
+                
+                # 2. 关闭开发模式（DEVEL=y 会包含冗余开发工具）
+                sed -i 's/CONFIG_DEVEL=y/CONFIG_DEVEL=n/' .config
+                
+                # 3. 关闭静态库生成（避免双重库文件占用磁盘）
+                # 替换已存在的配置，不存在则追加
+                sed -i 's/CONFIG_BUILD_STATIC_LIBS=y/CONFIG_BUILD_STATIC_LIBS=n/' .config
+                sed -i 's/CONFIG_PACKAGE_libc-static=y/CONFIG_PACKAGE_libc-static=n/' .config
+                grep -q "CONFIG_BUILD_STATIC_LIBS=n" .config || echo "CONFIG_BUILD_STATIC_LIBS=n" >> .config
+                grep -q "CONFIG_PACKAGE_libc-static=n" .config || echo "CONFIG_PACKAGE_libc-static=n" >> .config
+                grep -q "CONFIG_OPENSSL_NO_STATIC=y" .config || echo "CONFIG_OPENSSL_NO_STATIC=y" >> .config
+                grep -q "CONFIG_LIBTOOL_DLOPEN=n" .config || echo "CONFIG_LIBTOOL_DLOPEN=n" >> .config
+                
+                # 4. 关闭内核探针调试（非必需功能，减少编译复杂度）
+                sed -i 's/CONFIG_KERNEL_KPROBES=y/CONFIG_KERNEL_KPROBES=n/' .config
+                sed -i 's/CONFIG_KERNEL_KPROBE_EVENTS=y/CONFIG_KERNEL_KPROBE_EVENTS=n/' .config
+                grep -q "CONFIG_KERNEL_KPROBES=n" .config || echo "CONFIG_KERNEL_KPROBES=n" >> .config
+                grep -q "CONFIG_KERNEL_KPROBE_EVENTS=n" .config || echo "CONFIG_KERNEL_KPROBE_EVENTS=n" >> .config
+              
                 echo "查看.config内容："
+                grep -E "CONFIG_KERNEL_DEBUG_INFO|CONFIG_DEVEL|CONFIG_BUILD_STATIC_LIBS|CONFIG_KERNEL_KPROBES" .config
                 cat .config
 
             - name: Download package
