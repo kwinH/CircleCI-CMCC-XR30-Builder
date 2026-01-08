@@ -243,8 +243,8 @@ jobs:
                 grep -q "CONFIG_KERNEL_KPROBES=n" .config || echo "CONFIG_KERNEL_KPROBES=n" >> .config
                 grep -q "CONFIG_KERNEL_KPROBE_EVENTS=n" .config || echo "CONFIG_KERNEL_KPROBE_EVENTS=n" >> .config
               
-                echo "查看.config内容："
                 grep -E "CONFIG_KERNEL_DEBUG_INFO|CONFIG_DEVEL|CONFIG_BUILD_STATIC_LIBS|CONFIG_KERNEL_KPROBES" .config
+                echo "查看.config内容："
                 cat .config
 
             - name: Download package
@@ -303,7 +303,7 @@ jobs:
                 echo "DEBUG: HOST_CFLAGS is $HOST_CFLAGS"
                 CORES=$(nproc)
                 #JOBS=$((CORES + 1))
-                JOBS=$CORES
+                JOBS=1
                 
                 echo "🚀 Starting optimized compilation with ${JOBS} parallel jobs"
                 echo "Build optimizations enabled:"
