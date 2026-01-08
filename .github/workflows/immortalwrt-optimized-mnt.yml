@@ -218,6 +218,32 @@ jobs:
                 sed -i 's/CONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y/CONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y/g' .config
                 sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
                 sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
+              
+
+                # 1. 关闭内核调试信息（关键！减少临时文件和固件体积）
+                sed -i 's/CONFIG_KERNEL_DEBUG_INFO=y/CONFIG_KERNEL_DEBUG_INFO=n/' .config
+                sed -i 's/CONFIG_KERNEL_DEBUG_INFO_BTF=y/CONFIG_KERNEL_DEBUG_INFO_BTF=n/' .config
+                sed -i 's/CONFIG_KERNEL_DEBUG_INTO_BTF_MODULES=y/CONFIG_KERNEL_DEBUG_INTO_BTF_MODULES=n/' .config
+                
+                # 2. 关闭开发模式（DEVEL=y 会包含冗余开发工具）
+                sed -i 's/CONFIG_DEVEL=y/CONFIG_DEVEL=n/' .config
+                
+                # 3. 关闭静态库生成（避免双重库文件占用磁盘）
+                # 替换已存在的配置，不存在则追加
+                sed -i 's/CONFIG_BUILD_STATIC_LIBS=y/CONFIG_BUILD_STATIC_LIBS=n/' .config
+                sed -i 's/CONFIG_PACKAGE_libc-static=y/CONFIG_PACKAGE_libc-static=n/' .config
+                grep -q "CONFIG_BUILD_STATIC_LIBS=n" .config || echo "CONFIG_BUILD_STATIC_LIBS=n" >> .config
+                grep -q "CONFIG_PACKAGE_libc-static=n" .config || echo "CONFIG_PACKAGE_libc-static=n" >> .config
+                grep -q "CONFIG_OPENSSL_NO_STATIC=y" .config || echo "CONFIG_OPENSSL_NO_STATIC=y" >> .config
+                grep -q "CONFIG_LIBTOOL_DLOPEN=n" .config || echo "CONFIG_LIBTOOL_DLOPEN=n" >> .config
+                
+                # 4. 关闭内核探针调试（非必需功能，减少编译复杂度）
+                sed -i 's/CONFIG_KERNEL_KPROBES=y/CONFIG_KERNEL_KPROBES=n/' .config
+                sed -i 's/CONFIG_KERNEL_KPROBE_EVENTS=y/CONFIG_KERNEL_KPROBE_EVENTS=n/' .config
+                grep -q "CONFIG_KERNEL_KPROBES=n" .config || echo "CONFIG_KERNEL_KPROBES=n" >> .config
+                grep -q "CONFIG_KERNEL_KPROBE_EVENTS=n" .config || echo "CONFIG_KERNEL_KPROBE_EVENTS=n" >> .config
+              
+                grep -E "CONFIG_KERNEL_DEBUG_INFO|CONFIG_DEVEL|CONFIG_BUILD_STATIC_LIBS|CONFIG_KERNEL_KPROBES" .config
                 echo "查看.config内容："
                 cat .config
 
@@ -262,13 +288,22 @@ jobs:
                 echo "📦 Free space in openwrt directory:"
                 du -sh /workdir/openwrt || true 
 
+            - name: Clean old build artifacts
+              run: |
+                cd openwrt
+                make dirclean || true
+                # 清理残留的中间文件和静态库
+                rm -rf build_dir/target-*/*/.libs build_dir/target-*/*/*.a 2>/dev/null || true
+                rm -rf staging_dir/target-*/*/lib/*.a 2>/dev/null || true
+
             - name: Compile the firmware
               id: compile
               run: |
                 cd openwrt
                 echo "DEBUG: HOST_CFLAGS is $HOST_CFLAGS"
                 CORES=$(nproc)
-                JOBS=$((CORES + 1))
+                #JOBS=$((CORES + 1))
+                JOBS=1
                 
                 echo "🚀 Starting optimized compilation with ${JOBS} parallel jobs"
                 echo "Build optimizations enabled:"
@@ -287,21 +322,45 @@ jobs:
                 # 定期检查磁盘空间的后台任务
                 (
                   while pgrep -f "make.*-j" > /dev/null; do
-                    sleep 120  # 每2分钟检查一次
+                    sleep 60  # 每1分钟检查一次（原2分钟，优化响应速度）
                     echo "🔍 Disk usage during compilation (timestamp: $(date)):"
-                    df -hT | head -2
-                    # 如果磁盘使用率超过90%，发出警告
+                    df -hT | head -2  # 显示磁盘整体使用率
                     usage=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
-                    if [ "$usage" -gt 90 ]; then
-                      echo "⚠️  WARNING: Disk usage is at ${usage}%, may cause build failure!"
-                      # 尝试清理一些临时文件
-                      find /tmp -name "tmp-*" -type d -mmin +10 -exec rm -rf {} + 2>/dev/null || true
+                    
+                    if [ "$usage" -gt 80 ]; then
+                      echo "⚠️ Disk usage >80%! Searching for large directories (top 10)..."
+                      # 查找编译核心目录下最大的10个目录（按大小排序，显示人类可读格式）
+                      sudo du -h --max-depth=1 /workdir/openwrt 2>/dev/null | sort -hr | head -10
+                      echo "💾 Top 10 largest directories listed above. Starting cleanup..."
+                      
+                      # 原有清理逻辑保留，新增清理大目录下的冗余文件
+                      # 1. 清理LTO临时文件、目标文件、静态库
+                      find /workdir/openwrt/build_dir -name "*.ir" -o -name "*.o" -o -name "*.a" -o -name ".libs" -exec rm -rf {} + 2>/dev/null || true
+                      # 2. 清理过期下载包（dl目录下1天前的文件）
+                      find /workdir/openwrt/dl -type f -mtime +1 -exec rm -f {} + 2>/dev/null || true
+                      # 3. 清理ccache过期缓存
+                      ccache -c 2>/dev/null || true
+                      # 4. 清理staging_dir下的冗余头文件和库文件
+                      rm -rf /workdir/openwrt/staging_dir/target-*/*/lib/*.a 2>/dev/null || true
+                      rm -rf /workdir/openwrt/staging_dir/toolchain-*/*/include/* 2>/dev/null || true
+                      
+                      echo "✅ Cleanup completed. Updated disk usage:"
+                      df -hT | head -2
                     fi
                   done
-                ) &                
+                ) &     
                 
                 # Optimized build process
-                make -j${JOBS} V=s || make -j1 || make -j1 V=s
+                # make -j${JOBS} V=s || make -j1 || make -j1 V=s
+                make -j${JOBS} 2> >(tee build-error.log) >/dev/null || make -j1 2> >(tee -a build-error.log) >/dev/null || make -j1 V=s 2> >(tee -a build-error.log) >/dev/null
+                
+                if [ -s build-error.log ]; then
+                  echo "❌ 编译失败，错误日志已保存到 build-error.log"
+                  cat build-error.log
+                else
+                  echo "✅ 编译成功，无错误输出"
+                  rm -f build-error.log  # 成功则删除空日志文件
+                fi                
                 
                 # Calculate build time
                 BUILD_END=$(date +%s)
