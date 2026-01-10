@@ -2,6 +2,16 @@
 
 set -e
 
+# 更新 hosts 文件以加速网络访问
+echo "🔄 获取github hosts 配置..."
+curl -fsSL "https://gitlab.com/ineo6/hosts/-/raw/master/hosts" | sudo tee -a /etc/hosts > /dev/null
+echo "✅ hosts 文件已更新"
+
+# 在编译前添加 Go 环境变量
+export GOPROXY=https://goproxy.cn,direct
+export GOSUMDB=sum.golang.google.cn
+export GO111MODULE=on
+
 # 构建参数默认值
 APP_MTK=false
 OPTIMIZATION_LEVEL="full"
@@ -182,7 +192,7 @@ echo "📥 下载编译所需包..."
 make defconfig
 
 CORES=$(nproc)
-JOBS=$((CORES / 2))  # 在 Docker 中减少并行任务以节省资源
+JOBS=$((CORES - 1))
 echo "🚀 使用 $JOBS 个并行任务下载包 ($CORES 核心检测到)"
 make download -j"$JOBS"
 
@@ -204,10 +214,13 @@ BUILD_START=$(date +%s)
 # 编译命令
 if [ "$ENABLE_LTO" = true ] && [ "$ENABLE_MOLD" = true ]; then
     echo "⚙️  启用了 LTO 和 MOLD 优化"
-    make -j"$JOBS" V=s || make -j1 V=s
-else
-    make -j"$JOBS" || make -j1
 fi
+
+echo "🚀 使用 $JOBS 个并行任务编译 ($CORES 核心检测到)"
+make -j"$JOBS" V=s || {
+        echo "⚠️  并行编译失败，尝试单线程编译..."
+        make -j1 V=s
+    }
 
 # 计算编译时间
 BUILD_END=$(date +%s)
