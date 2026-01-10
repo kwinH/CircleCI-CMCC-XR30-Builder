@@ -765,7 +765,7 @@ function configure_additional_packages() {
     config_package_add luci-app-qos
 
     # 解锁网易云音乐服务
-    config_package_add luci-app-unblockneteasemusic
+    #config_package_add luci-app-unblockneteasemusic
 
     # 配置系统统计信息
     config_package_add luci-app-statistics
