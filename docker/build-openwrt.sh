@@ -128,6 +128,9 @@ if [ ! -d "data" ]; then
 mkdir data
 fi
 
+# 测试 GitHub 连接
+ping -c 4 github.com || { echo "❌ GitHub ping 失败，退出脚本"; exit 1; }
+
 cd data
 # 检查是否已有源码
 if [ ! -d "openwrt" ]; then

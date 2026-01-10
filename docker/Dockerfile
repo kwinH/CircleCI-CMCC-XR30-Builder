@@ -58,6 +58,10 @@ RUN apt-get update && apt-get install -y \
     rename \
     sudo \
     cpio \
+    curl \
+    iputils-ping \
+    dnsutils \
+    net-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # 设置时区
