@@ -158,7 +158,7 @@ echo "🔧 执行 DIY 脚本..."
 
 # 检查并执行 diy-part1.sh
 if [ -f "/workdir/scripts/diy-part1.sh" ]; then
-    chmod +x /workdir/scripts/diy-part1.sh
+    sudo chmod +x /workdir/scripts/diy-part1.sh
     /workdir/scripts/diy-part1.sh
 else
     echo "⚠️  diy-part1.sh 不存在，跳过"
@@ -174,7 +174,7 @@ echo "⚙️  配置编译选项..."
 cp defconfig/mt7981-ax3000.config .config
 
 if [ -f "/workdir/scripts/diy-part2-optimized-mnt.sh" ]; then
-    chmod +x /workdir/scripts/diy-part2-optimized-mnt.sh
+    sudo chmod +x /workdir/scripts/diy-part2-optimized-mnt.sh
     /workdir/scripts/diy-part2-optimized-mnt.sh
 fi
 
