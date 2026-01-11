@@ -684,7 +684,7 @@ function configure_additional_packages() {
     echo "📦 Configuring additional packages..."
 
     ## AdGuard Home
-    #config_package_add luci-app-adguardhome
+    config_package_add luci-app-adguardhome
 
     ## 网络存储
     config_package_add luci-app-samba4
