@@ -4,7 +4,7 @@ set -e
 
 # 重定向所有输出到带时间戳的日志文件
 CURRENT_TIME=$(date +"%Y%m%d_%H%M%S")
-exec > >(tee -a "/output/build_${CURRENT_TIME}.log") 2>&
+exec > >(tee -a "/output/build_${CURRENT_TIME}.log") 2>&1
 
 # 更新 hosts 文件以加速网络访问
 echo "🔄 获取github hosts 配置..."
