@@ -458,16 +458,18 @@ function configure_daed_kernel_options() {
 
 function setup_third_party_packages() {
     echo "📦 Setting up third-party packages..."
-    
+
+    if [ ! -d "package/custom/OpenWrt-Packages" ]; then
     # Create custom package directory
     mkdir -p package/custom
-    
+    fi
+
     # Clone third-party package repository
     if [ ! -d "package/custom/OpenWrt-Packages" ]; then
         echo "🌐 Cloning third-party packages..."
         git clone --depth 1 https://github.com/217heidai/OpenWrt-Packages.git package/custom/OpenWrt-Packages
     fi
-    
+
     # Clean conflicting packages
     clean_packages package/custom/OpenWrt-Packages
     
