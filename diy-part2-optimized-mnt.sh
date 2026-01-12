@@ -592,7 +592,11 @@ function configure_network_packages() {
 
 function configure_system_packages() {
     echo "🖥️  Configuring system packages..."
-    
+
+    configure_package_add "luci-compat"
+    configure_package_add "luci-lua-runtime"
+    configure_package_add "luci-lib-jsonc"
+
     # System management
     config_package_add "luci-app-ttyd"          # Web Terminal
     config_package_add "luci-app-autoreboot"    # Auto reboot scheduler
