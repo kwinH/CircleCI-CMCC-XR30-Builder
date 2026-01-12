@@ -2,7 +2,11 @@
 
 services:
   immortalwrt-builder:
-    build: .
+    build:
+      context: .
+      platforms:
+        - linux/amd64
+    platform: linux/amd64
     container_name: immortalwrt-builder
     volumes:
       - ./output:/output
