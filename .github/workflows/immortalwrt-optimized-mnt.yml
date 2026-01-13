@@ -343,6 +343,12 @@ jobs:
                       # 4. 清理staging_dir下的冗余头文件和库文件
                       rm -rf /workdir/openwrt/staging_dir/target-*/*/lib/*.a 2>/dev/null || true
                       rm -rf /workdir/openwrt/staging_dir/toolchain-*/*/include/* 2>/dev/null || true
+                
+                      rm -rf /workdir/openwrt/*.log
+                      # 删除openwrt根目录的.git目录
+                      rm -rf /workdir/data/openwrt/.git
+                      # 若feeds目录也有.git，可一并删除（仅释放少量空间）
+                      rm -rf /workdir/data/openwrt/feeds/*/.git                
                       
                       echo "✅ Cleanup completed. Updated disk usage:"
                       df -hT | head -2
