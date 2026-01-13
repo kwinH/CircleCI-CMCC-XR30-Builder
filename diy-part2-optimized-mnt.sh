@@ -613,13 +613,12 @@ function configure_system_packages() {
     config_package_add "kmod-usb-net"
     config_package_add "kmod-usb-net-rndis"
     config_package_add "kmod-usb-net-cdc-ether"
-    config_package_add "luci-app-usb3disable"   # USB3.0 disable control
+#    config_package_add "luci-app-usb3disable"   # USB3.0 disable control
     config_package_add "kmod-usb-storage"       # USB storage support
     config_package_add "kmod-usb-ohci"          # OHCI USB support
     config_package_add "kmod-usb-uhci"          # UHCI USB support
     config_package_add "usb-modeswitch"         # USB modem mode switching
     config_package_add "sendat"                 # AT command tool
-    config_package_add "luci-app-usb3disable"   # luci-app-usb3disable
 
     # Disk utilities
     config_package_add "fdisk"                  # GPT disk utility
@@ -687,44 +686,43 @@ function configure_custom_applications() {
 function configure_additional_packages() {
     echo "📦 Configuring additional packages..."
 
-    ## AdGuard Home
+    # AdGuard Home
     config_package_add luci-app-adguardhome
 
-    ## 网络存储
+    # 网络存储
     config_package_add luci-app-samba4
     config_package_add luci-app-minidlna
 
-    ## 网络监控
-    config_package_add luci-app-wrtbwmon
-    config_package_add luci-app-nlbwmon
+    # 网络监控
+    #config_package_add luci-app-nlbwmon
 
-    ## 网络工具
+    # 网络工具
     config_package_add luci-app-natmap
     config_package_add luci-app-p910nd
 
-    ## 系统工具
+    # 系统工具
     config_package_add luci-app-filetransfer
     config_package_add luci-app-ramfree
 
-    ## 网络加速
+    # 网络加速
     config_package_add luci-app-turboacc
 
-    ## 网络安全
+    # 网络安全
     config_package_add luci-app-firewall4
 
-    ## 网络分析
+    # 网络分析
     config_package_add luci-app-netdata
 
-    ## 配置应用商店
+    # 配置应用商店
     config_package_add luci-app-store
 
-    ## 应用过滤和管理
+    # 应用过滤和管理
     config_package_add luci-app-appfilter
 
-    ## 网络延迟监控
+    # 网络延迟监控
     config_package_add luci-app-apinger
 
-    ## 支持系统在线升级
+    # 支持系统在线升级
     config_package_add luci-app-attendedsysupgrade
 
     # 配置DDNS-Go
@@ -734,10 +732,10 @@ function configure_additional_packages() {
     config_package_add docker
     config_package_add luci-app-dockerman
 
-    ## 网络速度测试
+    # 网络速度测试
     config_package_add luci-app-netspeedtest
 
-    ## 配置ZeroTier虚拟网络
+    # 配置ZeroTier虚拟网络
     config_package_add luci-app-zerotier
 
     # 设备重启和切换固件
@@ -745,9 +743,6 @@ function configure_additional_packages() {
 
     # 基于IP的访问控制
     config_package_add luci-app-banip
-
-    # 磁盘管理
-    config_package_add luci-app-diskman
 
     # 文件管理助手
     config_package_add luci-app-fileassistant
