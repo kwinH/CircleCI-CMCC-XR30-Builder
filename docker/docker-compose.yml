@@ -23,4 +23,5 @@ services:
     #     limits:
     #       memory: 8G
     #       cpus: '4'
+    entrypoint: ["/workdir/scripts/build-openwrt.sh"]
     command: [ "--optimization-level", "full", "--enable-advanced-features","--custom-lan-ip", "192.168.6.1" ]
