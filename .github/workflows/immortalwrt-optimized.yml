@@ -239,9 +239,47 @@ jobs:
                 
                 # Record build start time
                 BUILD_START=$(date +%s)
+
+                # 定期检查磁盘空间的后台任务
+                (
+                  while pgrep -f "make.*-j" > /dev/null; do
+                    sleep 60  # 每1分钟检查一次（原2分钟，优化响应速度）
+                    echo "🔍 Disk usage during compilation (timestamp: $(date)):"
+                    df -hT | head -2  # 显示磁盘整体使用率
+                    usage=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
+
+                    if [ "$usage" -gt 80 ]; then
+                      echo "⚠️ Disk usage >80%! Searching for large directories (top 10)..."
+                      # 查找编译核心目录下最大的10个目录（按大小排序，显示人类可读格式）
+                      sudo du -h --max-depth=1 /workdir/openwrt 2>/dev/null | sort -hr | head -10
+                      echo "💾 Top 10 largest directories listed above. Starting cleanup..."
+
+                      # 原有清理逻辑保留，新增清理大目录下的冗余文件
+                      # 1. 清理LTO临时文件、目标文件、静态库
+                      find /workdir/openwrt/build_dir -name "*.ir" -o -name "*.o" -o -name "*.a" -o -name ".libs" -exec rm -rf {} + 2>/dev/null || true
+                      # 2. 清理过期下载包（dl目录下1天前的文件）
+                      find /workdir/openwrt/dl -type f -mtime +1 -exec rm -f {} + 2>/dev/null || true
+                      # 3. 清理ccache过期缓存
+                      ccache -c 2>/dev/null || true
+                      # 4. 清理staging_dir下的冗余头文件和库文件
+                      rm -rf /workdir/openwrt/staging_dir/target-*/*/lib/*.a 2>/dev/null || true
+                      rm -rf /workdir/openwrt/staging_dir/toolchain-*/*/include/* 2>/dev/null || true
+
+                      rm -rf /workdir/openwrt/*.log
+                      # 删除openwrt根目录的.git目录
+                      rm -rf /workdir/data/openwrt/.git
+                      # 若feeds目录也有.git，可一并删除（仅释放少量空间）
+                      rm -rf /workdir/data/openwrt/feeds/*/.git
+
+                      echo "✅ Cleanup completed. Updated disk usage:"
+                      df -hT | head -2
+                    fi
+                  done
+                ) &
                 
                 # Optimized build process
-                make -j${JOBS} V=s || make -j1 || make -j1 V=s
+                # make -j${JOBS} V=s || make -j1 || make -j1 V=s
+                make -j${JOBS} 2> >(tee build-error.log) >/dev/null || make -j1 2> >(tee -a build-error.log) >/dev/null || make -j1 V=s 2> >(tee -a build-error.log) >/dev/null
                 
                 # Calculate build time
                 BUILD_END=$(date +%s)
@@ -257,6 +295,80 @@ jobs:
                 fi
                 echo "COMPILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
                 echo "status=success" >> $GITHUB_OUTPUT
+
+            # ==============================================
+            # 核心新增：编译失败后执行磁盘空间检查 + 日志收集
+            # ==============================================
+            - name: Collect debug info on failure (Disk Space + Logs)
+              id: collect-debug
+              if: failure()  # 只有前面步骤失败时才执行
+              run: |
+                echo "=============================================="
+                echo "❌ Build failed! Collecting debug information..."
+                echo "=============================================="
+
+                # 1. 检查磁盘空间（关键：排查磁盘不足问题）
+                echo "📊 Disk Space Usage:"
+                df -hT
+                echo ""
+
+                # 2. 检查内存和交换空间（关键：排查OOM问题）
+                echo "📊 Memory & Swap Usage:"
+                free -h
+                echo ""
+
+                # 编译器信息
+                echo "🔍 Compiler Info:"
+                gcc --version
+                cc --version
+                which gcc
+                which cc
+                echo ""
+
+                # 3. 检查当前工作目录权限（修复：先判断目录是否存在）
+                echo "🔍 Work Directory Permissions:"
+                if [ -d "/workdir" ]; then
+                  ls -la /workdir
+                else
+                  echo "⚠️ /workdir does not exist (initialization step failed)"
+                fi
+                echo ""
+
+                # 4. 创建日志目录
+                mkdir -p $GITHUB_WORKSPACE/debug-logs
+
+                # 6. 收集编译过程中的关键日志（如果存在）
+                echo "📄 Collecting build logs..."
+                if [ -d "/workdir/openwrt" ]; then
+                  find /workdir/openwrt -name "*.log" -type f -size -10M | head -10 | xargs -I {} cp {} $GITHUB_WORKSPACE/debug-logs/ 2>/dev/null || true
+                else
+                  echo "⚠️ No build logs available (source code not cloned)"
+                fi
+
+                # 7. 收集 .config 文件（排查配置错误）
+                echo "📄 Collecting .config file..."
+                if [ -f "/workdir/openwrt/.config" ]; then
+                  cp /workdir/openwrt/.config $GITHUB_WORKSPACE/debug-logs/.config
+                else
+                  echo "⚠️ .config file not found (config step failed)"
+                  echo ".config file not available" > $GITHUB_WORKSPACE/debug-logs/.config
+                fi
+
+                # 8. 收集磁盘空间和内存使用情况的日志
+                echo "📄 Saving system info to log..."
+                df -hT > $GITHUB_WORKSPACE/debug-logs/disk-space.log
+                free -h > $GITHUB_WORKSPACE/debug-logs/memory.log
+
+                # 9. 列出收集到的日志文件
+                echo "📋 Collected debug logs:"
+                ls -la $GITHUB_WORKSPACE/debug-logs
+                echo ""
+
+                cat build-error.log
+
+                echo "✅ Debug information collection completed"
+
+
 
             - name: Check space usage
               if: (!cancelled())

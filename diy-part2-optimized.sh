@@ -520,8 +520,8 @@ function configure_unwanted_packages() {
     local passwall_ssr_packages=(
         "luci-app-passwall2_INCLUDE_ShadowsocksR_Libev_Client"
         "luci-app-passwall2_INCLUDE_Haproxy"
-        # "luci-app-passwall2_INCLUDE_Shadowsocks_Libev_Client"
-        # "luci-app-passwall2_INCLUDE_Shadowsocks_Rust_Client"
+        "luci-app-passwall2_INCLUDE_Shadowsocks_Libev_Client"
+        "luci-app-passwall2_INCLUDE_Shadowsocks_Rust_Client"
         "luci-app-passwall2_INCLUDE_Simple_Obfs"
         "luci-app-passwall2_INCLUDE_V2ray_Plugin"
         "shadowsocks-libev-ss-local"
@@ -532,7 +532,7 @@ function configure_unwanted_packages() {
         "v2ray-geoip"
         "v2ray-geosite"
     )
-    
+
     for package in "${passwall_ssr_packages[@]}"; do
         config_package_del "$package"
     done
@@ -541,26 +541,26 @@ function configure_unwanted_packages() {
         "luci-app-passwall2_INCLUDE_SingBox"
         "sing-box"
     )
-    
+
     for package in "${passwall_singbox_packages[@]}"; do
         config_package_del "$package"
     done
-    
+
     # Remove theme packages
     config_package_del "luci-theme-bootstrap-mod"
-    
+
     # Clean shadowsocks packages from custom directory
     if [ -d "package/custom/OpenWrt-Packages" ]; then
         rm -rf package/custom/OpenWrt-Packages/shadowsocks-rust 2>/dev/null || true
         rm -rf package/custom/OpenWrt-Packages/simple-obfs 2>/dev/null || true
     fi
-    
+
     echo "✅ Unwanted packages removed"
 }
 
 function configure_network_packages() {
     echo "🌐 Configuring network packages..."
-    
+
     # Core network utilities
     config_package_add "curl"                    # HTTP client
     config_package_add "socat"                   # Network relay tool
@@ -570,38 +570,38 @@ function configure_network_packages() {
     config_package_add "kmod-sched-bpf"
     config_package_add "kmod-nft-bridge"
 
-    
+
     # Multi-WAN support
     # config_package_add "kmod-macvlan"           # MACVLAN support
     # config_package_add "mwan3"                  # Multi-WAN management
     # config_package_add "luci-app-mwan3"        # Multi-WAN WebUI
-    
+
     # USB network adapters
     local usb_network_packages=(
         "kmod-usb-net-ipheth"              # iPhone tethering
     )
-    
+
     for package in "${usb_network_packages[@]}"; do
         config_package_add "$package"
     done
-    
+
     echo "✅ Network packages configured"
 }
 
 function configure_system_packages() {
     echo "🖥️  Configuring system packages..."
-    
+
     # System management
     config_package_add "luci-app-ttyd"          # Web Terminal
     config_package_add "luci-app-autoreboot"    # Auto reboot scheduler
     config_package_add "luci-app-autotimeset"   # Scheduled tasks
     config_package_add "luci-lib-ipkg"          # Package manager library
-    
+
     # Network tools and binding
     config_package_add "luci-app-arpbind"       # IP-MAC binding
     config_package_add "luci-app-wol"           # Wake on LAN
     config_package_add "qrencode"               # QR code generator
-    
+
     # USB support
     config_package_add "usbutils"
     config_package_add "kmod-usb-net"
@@ -618,7 +618,7 @@ function configure_system_packages() {
     # Disk utilities
     config_package_add "fdisk"                  # GPT disk utility
     #config_package_add "sgdisk"                 # Script-friendly GPT utility
-    
+
     # Performance and monitoring
     config_package_add "iperf"                  # Network performance testing
     # config_package_add "coremark"             # CPU benchmark (commented out for size)
@@ -627,39 +627,39 @@ function configure_system_packages() {
 
     # Theme Argon
     config_package_add "luci-theme-argon"
-    
+
     echo "✅ System packages configured"
 }
 
 function configure_shell_packages() {
     echo "🐚 Configuring shell and terminal packages..."
-    
+
     # Advanced shell environment
     # config_package_add "zsh"                   # Zsh shell
     # config_package_add "vim-full"               # Full-featured Vim
     config_package_add "micro"                  #
     config_package_add "byobu"                  # Terminal multiplexer wrapper
     config_package_add "tmux"                   # Terminal multiplexer
-    
+
     echo "✅ Shell packages configured"
 }
 
 function configure_custom_applications() {
     echo "📱 Configuring custom applications..."
-    
+
     # Campus network authentication
     config_package_add "luci-app-mentohust"     # MentoHust WebUI
-    
+
     # Advanced routing and proxy
     config_package_add "luci-app-daed"          # Daed WebUI
-    
+
     # Configure kernel options for Daed (eBPF support)
     configure_daed_kernel_options
-    
+
     # Optional packages (commented out by default)
     # config_package_add "luci-app-frpc"        # FRP client
     # config_package_add "luci-app-mosdns"      # MosDNS
-    
+
     # Passwall2 configuration (commented out by default)
     echo "🔐 Enabling Passwall2..."
     config_package_add "luci-app-passwall2"
@@ -669,116 +669,13 @@ function configure_custom_applications() {
     config_package_add "luci-app-passwall2_Nftables_Transparent_Proxy"
     config_package_add "kmod-nft-socket"
     config_package_add "kmod-nft-tproxy"
-    
+
     # Upnp
     config_package_add "luci-app-upnp"
     config_package_add "miniupnpd"
 
     echo "✅ Custom applications configured"
 }
-
-# 添加新的软件包配置函数
-function configure_additional_packages() {
-    echo "📦 Configuring additional packages..."
-
-    ## AdGuard Home
-    config_package_add luci-app-adguardhome
-
-    ## 网络存储
-    config_package_add luci-app-samba4
-    config_package_add luci-app-minidlna
-
-    ## 网络监控
-    config_package_add luci-app-wrtbwmon
-    config_package_add luci-app-nlbwmon
-
-    ## 网络工具
-    config_package_add luci-app-natmap
-    config_package_add luci-app-p910nd
-
-    ## 系统工具
-    config_package_add luci-app-filetransfer
-    config_package_add luci-app-ramfree
-
-    ## 网络加速
-    config_package_add luci-app-turboacc
-
-    ## 网络安全
-    config_package_add luci-app-firewall4
-
-    ## 网络分析
-    config_package_add luci-app-netdata
-
-    ## 配置应用商店
-    config_package_add luci-app-store
-
-    ## 应用过滤和管理
-    config_package_add luci-app-appfilter
-
-    ## 网络延迟监控
-    config_package_add luci-app-apinger
-
-    ## 支持系统在线升级
-    config_package_add luci-app-attendedsysupgrade
-
-    # 配置DDNS-Go
-    config_package_add luci-app-ddns-go
-
-    # Docker容器管理
-    config_package_add docker
-    config_package_add luci-app-dockerman
-
-    ## 网络速度测试
-    config_package_add luci-app-netspeedtest
-
-    ## 配置ZeroTier虚拟网络
-    config_package_add luci-app-zerotier
-
-    # 设备重启和切换固件
-    config_package_add luci-app-advanced-reboot
-
-    # 基于IP的访问控制
-    config_package_add luci-app-banip
-
-    # 磁盘管理
-    config_package_add luci-app-diskman
-
-    # 文件管理助手
-    config_package_add luci-app-fileassistant
-
-    # 用于配置和管理 iStoreX 存储解决方案
-    config_package_add luci-app-istorex
-
-    # 在线用户查看
-    config_package_add luci-app-onliner
-
-    # 设备关机
-    config_package_add luci-app-poweroff
-
-    # qBittorrent
-    config_package_add luci-app-qbittorrent
-
-    # 配置和管理 PPPoE 服务器
-    config_package_add luci-app-pppoe-server
-
-    # 配置QoS流量管理
-    config_package_add luci-app-qos
-
-    # 解锁网易云音乐服务
-    config_package_add luci-app-unblockneteasemusic
-
-    # 配置系统统计信息
-    config_package_add luci-app-statistics
-
-    # 配置网页访问限制
-    config_package_add luci-app-webrestriction
-
-    # 配置网页URL过滤
-    config_package_add luci-app-weburl
-
-    echo "✅ Additional packages configured"
-}
-
 
 function configure_default_shell() {
     echo "🐠 Installing Fish and setting as default..."
@@ -792,12 +689,12 @@ function configure_default_shell() {
 # ============================================
 
 # Device configuration
-echo "⌚ Device list before fixed..." 
+echo "⌚ Device list before fixed..."
 config_device_list
 config_device_keep_only "cmcc_xr30-stock"
 
 echo "✅ Configured for XR30-stock (H layout) only"
-echo "⌚ Device list after fixed..." 
+echo "⌚ Device list after fixed..."
 
 # Theme modification
 sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
@@ -809,7 +706,6 @@ configure_network_packages
 configure_system_packages
 configure_shell_packages
 configure_custom_applications
-configure_additional_packages
 
 # ============================================
 # Apply All Optimizations
@@ -825,7 +721,7 @@ apply_optimizations_by_level
 
 # Apply specific optimizations
 apply_build_optimizations
-apply_mt7981_optimizations  
+apply_mt7981_optimizations
 apply_compiler_optimizations
 
 # Configure Default Shell
@@ -861,7 +757,7 @@ total_packages=$(grep "CONFIG_PACKAGE.*=y" .config | wc -l)
 luci_apps=$(grep "CONFIG_PACKAGE_luci-app.*=y" .config | wc -l)
 kernel_modules=$(grep "CONFIG_PACKAGE_kmod.*=y" .config | wc -l)
 echo "  - 总软件包: $total_packages"
-echo "  - LuCI 应用: $luci_apps" 
+echo "  - LuCI 应用: $luci_apps"
 echo "  - 内核模块: $kernel_modules"
 
 cat .config
