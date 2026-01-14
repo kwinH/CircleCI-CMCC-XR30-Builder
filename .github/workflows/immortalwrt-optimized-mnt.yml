@@ -350,7 +350,7 @@ jobs:
                   while pgrep -f "make.*-j" > /dev/null; do
                     sleep 60  # 每1分钟检查一次
                     echo "🔍 Disk usage during compilation (timestamp: $(date)):"
-                    df -hT | grep -E '(/dev/root|/dev/sda1)'  # 显示磁盘整体使用率
+                    df -hT | grep -E '(/dev/root|/mnt)'  # 显示磁盘整体使用率
                     usage=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
                     
                     if [ "$usage" -gt 80 ]; then
@@ -377,7 +377,7 @@ jobs:
                       rm -rf /workdir/data/openwrt/feeds/*/.git                
                       
                       echo "✅ Cleanup completed. Updated disk usage:"
-                      df -hT | grep -E '(/dev/root|/dev/sda1)'
+                      df -hT | grep -E '(/dev/root|/mnt)'
                     fi
                   done
                 ) &     
