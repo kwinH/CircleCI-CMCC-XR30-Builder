@@ -723,10 +723,10 @@ function configure_additional_packages() {
     config_package_add luci-app-apinger
 
     # 支持系统在线升级
-    config_package_add luci-app-attendedsysupgrade
+    ##config_package_add luci-app-attendedsysupgrade
 
     # 配置DDNS-Go
-    config_package_add luci-app-ddns-go
+    ##config_package_add luci-app-ddns-go
 
     # Docker容器管理
     config_package_add docker
@@ -748,34 +748,34 @@ function configure_additional_packages() {
     config_package_add luci-app-fileassistant
 
     # 用于配置和管理 iStoreX 存储解决方案
-    config_package_add luci-app-istorex
+    ##config_package_add luci-app-istorex
 
     # 在线用户查看
     config_package_add luci-app-onliner
 
     # 设备关机
-    config_package_add luci-app-poweroff
+    ##config_package_add luci-app-poweroff
 
     # qBittorrent
-    config_package_add luci-app-qbittorrent
+    ##config_package_add luci-app-qbittorrent
 
     # 配置和管理 PPPoE 服务器
-    config_package_add luci-app-pppoe-server
+    ##config_package_add luci-app-pppoe-server
 
     # 配置QoS流量管理
-    config_package_add luci-app-qos
+    ##config_package_add luci-app-qos
 
     # 解锁网易云音乐服务
     #config_package_add luci-app-unblockneteasemusic
 
     # 配置系统统计信息
-    config_package_add luci-app-statistics
+    ##config_package_add luci-app-statistics
 
     # 配置网页访问限制
-    config_package_add luci-app-webrestriction
+    ##config_package_add luci-app-webrestriction
 
     # 配置网页URL过滤
-    config_package_add luci-app-weburl
+    ##config_package_add luci-app-weburl
 
     echo "✅ Additional packages configured"
 }
