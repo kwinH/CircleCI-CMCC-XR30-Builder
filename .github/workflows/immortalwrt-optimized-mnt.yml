@@ -214,6 +214,8 @@ jobs:
               id: update_config_build
               if: steps.feeds-update.outcome == 'success' && !cancelled()
               run: |
+                cd openwrt
+
                 # 安全设置构建目录覆盖选项
                 if [ -f ".config" ]; then
                     # 检查配置是否已存在（包括被注释的情况）
