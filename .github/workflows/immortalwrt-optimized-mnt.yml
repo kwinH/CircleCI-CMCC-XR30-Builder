@@ -356,7 +356,7 @@ jobs:
                   done
                 ) &     
                 
-                mkdir -p /mnt/openwrt_build
+                sudo mkdir -p /mnt/openwrt_build
                 
                 # Optimized build process
                 # make -j${JOBS} V=s || make -j1 || make -j1 V=s
