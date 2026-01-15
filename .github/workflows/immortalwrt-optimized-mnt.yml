@@ -270,8 +270,20 @@ jobs:
                 grep -q "CONFIG_KERNEL_KPROBE_EVENTS=n" .config || echo "CONFIG_KERNEL_KPROBE_EVENTS=n" >> .config
               
                 grep -E "CONFIG_KERNEL_DEBUG_INFO|CONFIG_DEVEL|CONFIG_BUILD_STATIC_LIBS|CONFIG_KERNEL_KPROBES" .config
-                echo "查看.config内容："
-                cat .config
+
+
+            - name: cat config
+              if: steps.config.outcome == 'success' && !cancelled()
+              run: |
+                  cd openwrt
+                  # 去重：保留每个配置项的最后一次定义（符合OpenWRT配置规则）
+                  awk -F '=' '!a[$1]++' .config > .config.tmp && mv .config.tmp .config
+                
+                  # 移除注释行和空行（可选，让.config更整洁）
+                  sed -i '/^#/d; /^$/d' .config
+                
+                  echo "查看.config内容："
+                  cat .config
 
             - name: Download package
               id: package

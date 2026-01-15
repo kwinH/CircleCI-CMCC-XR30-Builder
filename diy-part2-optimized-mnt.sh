@@ -682,13 +682,50 @@ function configure_custom_applications() {
     echo "✅ Custom applications configured"
 }
 
+function configure_docker_support() {
+    echo "🐳 配置Docker支持..."
+
+    # 内核必需项（Docker依赖）
+    config_add "KERNEL_CGROUPS"
+    config_add "KERNEL_CGROUP_MEM_RES_CTLR"
+    config_add "KERNEL_CGROUP_PIDS"
+    config_add "KERNEL_NAMESPACES"
+    config_add "KERNEL_OVERLAY_FS"              # 存储驱动overlay2需要
+    config_add "KERNEL_BRIDGE"
+    config_add "KERNEL_VETH"                    # 虚拟网卡，Docker网络需要
+
+    # Docker核心组件
+    config_package_add "docker"
+    config_package_add "docker-ce"              # 优先选docker-ce（若无则只保留docker）
+    config_package_add "containerd"
+    config_package_add "runc"
+    config_package_add "docker-compose"         # 可选，按需添加
+
+    # 依赖工具
+    config_package_add "bridge-utils"
+    config_package_add "iptables"
+    config_package_add "ebtables"
+    config_package_add "kmod-br-netfilter"      # 桥接网络过滤
+
+    config_package_add "luci-app-dockerman"
+    config_package_add "luci-i18n-dockerman-zh-cn"  # 可选，中文语言包
+
+    echo "✅ Docker支持配置完成"
+}
+
+
 # 添加新的软件包配置函数
 function configure_additional_packages() {
     echo "📦 Configuring additional packages..."
 
+    # 配置应用商店
+    config_package_add luci-app-store
+
     # AdGuard Home
     config_package_add luci-app-adguardhome
+}
 
+function configure_additional_packages2() {
     # 网络存储
     config_package_add luci-app-samba4
     config_package_add luci-app-minidlna
@@ -713,8 +750,7 @@ function configure_additional_packages() {
     # 网络分析
     config_package_add luci-app-netdata
 
-    # 配置应用商店
-    config_package_add luci-app-store
+
 
     # 应用过滤和管理
     config_package_add luci-app-appfilter
@@ -811,6 +847,7 @@ configure_system_packages
 configure_shell_packages
 configure_custom_applications
 configure_additional_packages
+configure_docker_support
 
 # ============================================
 # Apply All Optimizations
