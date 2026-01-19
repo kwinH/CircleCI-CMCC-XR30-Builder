@@ -607,13 +607,12 @@ function configure_system_packages() {
     config_package_add "kmod-usb-net"
     config_package_add "kmod-usb-net-rndis"
     config_package_add "kmod-usb-net-cdc-ether"
-    config_package_add "luci-app-usb3disable"   # USB3.0 disable control
+    #config_package_add "luci-app-usb3disable"   # USB3.0 disable control
     config_package_add "kmod-usb-storage"       # USB storage support
     config_package_add "kmod-usb-ohci"          # OHCI USB support
     config_package_add "kmod-usb-uhci"          # UHCI USB support
     config_package_add "usb-modeswitch"         # USB modem mode switching
     config_package_add "sendat"                 # AT command tool
-    config_package_add "luci-app-usb3disable"   # luci-app-usb3disable
 
     # Disk utilities
     config_package_add "fdisk"                  # GPT disk utility
@@ -674,6 +673,12 @@ function configure_custom_applications() {
     config_package_add "luci-app-upnp"
     config_package_add "miniupnpd"
 
+    ## 配置应用商店
+    config_package_add "luci-app-store"
+
+    # AdGuard Home
+    config_package_add "luci-app-adguardhome"
+
     echo "✅ Custom applications configured"
 }
 
@@ -701,7 +706,7 @@ sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/M
 
 # Package management - organized approach
 setup_third_party_packages
-configure_unwanted_packages
+#configure_unwanted_packages
 configure_network_packages
 configure_system_packages
 configure_shell_packages
