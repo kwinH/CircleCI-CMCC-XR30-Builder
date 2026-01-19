@@ -1,0 +1,27 @@
+# docker build -t immortalwrt-builder .
+
+services:
+  immortalwrt-builder:
+    build:
+      context: .
+      platforms:
+        - linux/amd64
+    platform: linux/amd64
+    container_name: immortalwrt-builder
+    volumes:
+      - ./output:/output
+      - ./data:/workdir/data
+      - ../diy-part1.sh:/workdir/scripts/diy-part1.sh
+      - ../diy-part2-optimized.sh:/workdir/scripts/diy-part2-optimized.sh
+      - ./build-openwrt.sh:/workdir/scripts/build-openwrt.sh
+    environment:
+      - TZ=Asia/Shanghai
+      - REPO_URL=https://ghfast.top/https://github.com/padavanonly/immortalwrt-mt798x-6.6
+    # 可选：限制资源使用
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 8G
+    #       cpus: '4'
+    entrypoint: ["/workdir/scripts/build-openwrt.sh"]
+    command: [ "--optimization-level", "full", "--enable-advanced-features","--custom-lan-ip", "192.168.6.1" ]

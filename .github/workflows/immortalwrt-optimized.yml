@@ -4,6 +4,11 @@ on:
     repository_dispatch:
     workflow_dispatch:
         inputs:
+            RELOAD_CONFIG:
+                description: '重新生成配置文件.config'
+                required: true
+                default: false
+                type: boolean
             APP_MTK:
                 description: 'Use luci-app-mtk wifi config'
                 required: true
@@ -50,9 +55,9 @@ on:
                 default: false
                 type: boolean
             CUSTOM_LAN_IP:
-                description: 'Custom LAN IP address (default: 192.168.3.1, replaces ImmortalWrt default 192.168.6.1)'
+                description: 'Custom LAN IP address (default: 192.168.6.1)'
                 required: false
-                default: '192.168.3.1'
+                default: '192.168.6.1'
                 type: string
 
 env:
@@ -65,7 +70,7 @@ env:
     # CONFIG_FILE: .config
     DIY_P1_SH: diy-part1.sh
     DIY_P2_SH: diy-part2-optimized.sh
-    
+
     # Optimization flags
     OPTIMIZATION_LEVEL: ${{ github.event.inputs.OPTIMIZATION_LEVEL || 'full' }}
     # Individual optimization settings (only used in custom mode)
@@ -75,7 +80,7 @@ env:
     KERNEL_CLANG_LTO: ${{ github.event.inputs.KERNEL_CLANG_LTO || 'true' }}
     USE_GCC14: ${{ github.event.inputs.USE_GCC14 || 'true' }}
     ENABLE_ADVANCED_FEATURES: ${{ github.event.inputs.ENABLE_ADVANCED_FEATURES || 'false' }}
-    CUSTOM_LAN_IP: ${{ github.event.inputs.CUSTOM_LAN_IP || '192.168.3.1' }}
+    CUSTOM_LAN_IP: ${{ github.event.inputs.CUSTOM_LAN_IP || '192.168.6.1' }}
 
 jobs:
     ImmortalWrt-Builder-Optimized:
@@ -84,7 +89,7 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@main
-            
+
             - name: Check space usage
               if: (!cancelled())
               run: df -hT
@@ -174,16 +179,28 @@ jobs:
                 ./scripts/feeds install -a
                 echo "status=success" >> $GITHUB_OUTPUT
 
+            - name: cp .config
+              id: cp_config
+              run: |
+                    if [ -f "$GITHUB_WORKSPACE/.config" ]; then
+                      cp -f $GITHUB_WORKSPACE/.config openwrt/.config
+                    else
+                      echo "⚠️ Config file not found, using reload option"
+                      # 自动触发配置重载逻辑
+                      echo "SHOULD_RELOAD_CONFIG=true" >> $GITHUB_ENV
+                    fi
+
+
             - name: Move config & execute diy-part2.sh
               id: config
-              if: steps.feeds-update.outcome == 'success' && !cancelled()
+              if:  github.event.inputs.RELOAD_CONFIG == 'true' || env.SHOULD_RELOAD_CONFIG == 'true'
               run: |
                     cp -f openwrt/defconfig/mt7981-ax3000.config openwrt/.config
                     chmod +x $DIY_P2_SH
                     cd openwrt
                     $GITHUB_WORKSPACE/$DIY_P2_SH
                     echo "status=success" >> $GITHUB_OUTPUT
-            
+
             - name: Use luci-app-mtk config
               if: github.event.inputs.APP_MTK == 'true'
               run: |
@@ -193,13 +210,47 @@ jobs:
                 sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
                 sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
 
-            - name: Download package
-              id: package
-              if: steps.config.outcome == 'success' && !cancelled()
+            - name: cat config
+              run: |
+                  cd openwrt
+                  # 去重：保留每个配置项的最后一次定义（符合OpenWRT配置规则）
+                  awk -F '=' '!a[$1]++' .config > .config.tmp && mv .config.tmp .config
+                
+                  # 移除注释行和空行（可选，让.config更整洁）
+                  sed -i '/^#/d; /^$/d' .config
+                
+                  echo "查看.config内容："
+                  cat .config
+
+            - name: mkdir config build dir
+              id: update_config_build
+              if: steps.init.outcome == 'success' && !cancelled()
+              run: |
+                sudo mkdir -p /mnt/openwrt_build
+                sudo chmod 777 /mnt/openwrt_build
+                # 4. 测试写入权限（关键）
+                touch /mnt/openwrt_build/test.txt
+                if [ $? -eq 0 ]; then
+                  echo "路径权限正常"
+                  rm /mnt/openwrt_build/test.txt
+                else
+                  echo "路径无写入权限，检查挂载/权限"
+                fi
+                
+                ln -sfn "/mnt/openwrt_build" "/workdir/openwrt/build_dir"
+
+            - name: defconfig
+              id: defconfig
+              if: steps.update_config_build.outcome == 'success' && !cancelled()
               run: |
                 cd openwrt
-                make defconfig
-                
+                make defconfig V=s   
+
+            - name: Download package
+              id: package
+              if: steps.defconfig.outcome == 'success' && !cancelled()
+              run: |
+                cd openwrt  
                 # Use optimized parallel download
                 CORES=$(nproc)
                 JOBS=$((CORES + 1))
@@ -217,9 +268,10 @@ jobs:
                 # 如果找不到完全匹配的 sha，回退使用最近的缓存
                 restore-keys: |
                   ${{ runner.os }}-openwrt-ccache-${{ env.REPO_BRANCH }}-
-      
+
             - name: Compile the firmware
               id: compile
+              if: steps.package.outcome == 'success' && !cancelled()
               run: |
                 cd openwrt
                 echo "DEBUG: HOST_CFLAGS is $HOST_CFLAGS"
@@ -241,7 +293,7 @@ jobs:
                 BUILD_START=$(date +%s)
                 
                 # Optimized build process
-                make -j${JOBS} V=s || make -j1 || make -j1 V=s
+                make -j${JOBS} V=s|| make -j1 V=s
                 
                 # Calculate build time
                 BUILD_END=$(date +%s)
@@ -258,11 +310,61 @@ jobs:
                 echo "COMPILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
                 echo "status=success" >> $GITHUB_OUTPUT
 
+            # ==============================================
+            # 核心新增：编译失败后执行磁盘空间检查 + 日志收集
+            # ==============================================
+            - name: Collect debug info on failure (Disk Space + Logs)
+              id: collect-debug
+              if: failure()  # 只有前面步骤失败时才执行
+              run: |
+                echo "=============================================="
+                echo "❌ Build failed! Collecting debug information..."
+                echo "=============================================="
+                
+                # 1. 检查磁盘空间（关键：排查磁盘不足问题）
+                echo "📊 Disk Space Usage:"
+                df -hT
+                echo ""
+                
+                # 2. 检查内存和交换空间（关键：排查OOM问题）
+                echo "📊 Memory & Swap Usage:"
+                free -h
+                echo ""
+
+                # 编译器信息
+                echo "🔍 Compiler Info:"
+                gcc --version
+                cc --version
+                which gcc
+                which cc
+                echo ""          
+
+                # 3. 创建日志目录
+                mkdir -p $GITHUB_WORKSPACE/debug-logs
+                
+                # 4. 收集编译过程中的关键日志（如果存在）
+                echo "📄 Collecting build logs..."
+                if [ -d "/workdir/openwrt" ]; then
+                  find /workdir/openwrt -name "*.log" -type f -size -10M | head -10 | xargs -I {} cp {} $GITHUB_WORKSPACE/debug-logs/ 2>/dev/null || true
+                else
+                  echo "⚠️ No build logs available (source code not cloned)"
+                fi
+                
+                # 5. 列出收集到的日志文件
+                echo "📋 Collected debug logs:"
+                ls -la $GITHUB_WORKSPACE/debug-logs
+                echo ""  
+                          
+                echo "✅ Debug information collection completed"
+
+
+
             - name: Check space usage
               if: (!cancelled())
               run: df -hT
 
             - name: Organize compiled firmware
+              id: organize
               if: steps.compile.outcome == 'success' && !cancelled()
               run: |
                 mapfile -t devices < <(grep '^CONFIG_TARGET_DEVICE.*=y' openwrt/.config | sed -r 's/.*DEVICE_(.*)=y/\1/')
@@ -295,7 +397,7 @@ jobs:
                 echo "status=success" >> $GITHUB_OUTPUT
 
             - name: Upload firmware to Artifacts
-              # if: steps.organize.outcome == 'success' && !cancelled()
+              if: steps.organize.outcome == 'success' && !cancelled()
               uses: actions/upload-artifact@main
               with:
                 name: ${{ env.COMPILE_DATE }}-${{ env.OPENWRT_NAME }}-${{ env.UPLOAD_TAG_NAME }}${{ env.WIFI_INTERFACE }}
