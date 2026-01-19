@@ -2,6 +2,52 @@
 
 set -e
 
+
+function setup_custom_lan_ip() {
+    local custom_ip="${CUSTOM_LAN_IP:-192.168.6.1}"
+
+    echo "🌐 Setting up custom LAN IP: $custom_ip"
+
+    # Replace ImmortalWrt default IP (192.168.6.1) if different from user input
+    if [[ "$custom_ip" != "192.168.6.1" ]]; then
+        echo "Replacing ImmortalWrt default IP (192.168.6.1) with $custom_ip"
+
+        # Find and update config_generate files
+        find . -name "config_generate" -type f | while read -r config_file; do
+            echo "Updating ImmortalWrt IP in: $config_file"
+            sed -i "s/192.168.6.1/$custom_ip/g" "$config_file"
+        done
+
+        # Update other files that might contain the ImmortalWrt IP
+        find . -name "*.sh" -o -name "*.conf" -o -name "*.cfg" | xargs grep -l "192.168.6.1" 2>/dev/null | while read -r file; do
+            echo "Updating ImmortalWrt IP in: $file"
+            sed -i "s/192.168.6.1/$custom_ip/g" "$file"
+        done
+    else
+        echo "Keeping ImmortalWrt default IP (192.168.6.1) as requested"
+    fi
+
+    # Replace standard OpenWrt IP (192.168.1.1) if different from user input
+    if [[ "$custom_ip" != "192.168.1.1" ]]; then
+        echo "Replacing standard OpenWrt IP (192.168.1.1) with $custom_ip"
+
+        find . -name "config_generate" -type f | while read -r config_file; do
+            echo "Updating OpenWrt IP in: $config_file"
+            sed -i "s/192.168.1.1/$custom_ip/g" "$config_file"
+        done
+
+        # Update other files that might contain IP addresses
+        find . -name "*.sh" -o -name "*.conf" -o -name "*.cfg" | xargs grep -l "192.168.1.1" 2>/dev/null | while read -r file; do
+            echo "Updating OpenWrt IP in: $file"
+            sed -i "s/192.168.1.1/$custom_ip/g" "$file"
+        done
+    else
+        echo "Keeping standard OpenWrt IP (192.168.1.1) as requested"
+    fi
+
+    echo "LAN IP setup completed for: $custom_ip"
+}
+
 # 重定向所有输出到带时间戳的日志文件
 CURRENT_TIME=$(date +"%Y%m%d_%H%M%S")
 exec > >(tee -a "/output/build_${CURRENT_TIME}.log") 2>&1
@@ -17,75 +63,12 @@ export GOSUMDB=sum.golang.google.cn
 export GO111MODULE=on
 
 # 构建参数默认值
-APP_MTK=false
-OPTIMIZATION_LEVEL="full"
-ENABLE_LTO=true
-ENABLE_MOLD=true
-ENABLE_BPF=true
-KERNEL_CLANG_LTO=true
-USE_GCC14=true
-ENABLE_ADVANCED_FEATURES=false
+
 CUSTOM_LAN_IP="192.168.6.1"
 
 # 解析命令行参数
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --app-mtk)
-            APP_MTK=true
-            shift
-            ;;
-        --optimization-level)
-            OPTIMIZATION_LEVEL="$2"
-            shift 2
-            ;;
-        --enable-lto)
-            ENABLE_LTO=true
-            shift
-            ;;
-        --disable-lto)
-            ENABLE_LTO=false
-            shift
-            ;;
-        --enable-mold)
-            ENABLE_MOLD=true
-            shift
-            ;;
-        --disable-mold)
-            ENABLE_MOLD=false
-            shift
-            ;;
-        --enable-bpf)
-            ENABLE_BPF=true
-            shift
-            ;;
-        --disable-bpf)
-            ENABLE_BPF=false
-            shift
-            ;;
-        --enable-kernel-clang-lto)
-            KERNEL_CLANG_LTO=true
-            shift
-            ;;
-        --disable-kernel-clang-lto)
-            KERNEL_CLANG_LTO=false
-            shift
-            ;;
-        --use-gcc14)
-            USE_GCC14=true
-            shift
-            ;;
-        --use-default-gcc)
-            USE_GCC14=false
-            shift
-            ;;
-        --enable-advanced-features)
-            ENABLE_ADVANCED_FEATURES=true
-            shift
-            ;;
-        --disable-advanced-features)
-            ENABLE_ADVANCED_FEATURES=false
-            shift
-            ;;
         --custom-lan-ip)
             CUSTOM_LAN_IP="$2"
             shift 2
@@ -93,14 +76,6 @@ while [[ $# -gt 0 ]]; do
         --help)
             echo "用法: $0 [选项]"
             echo "选项:"
-            echo "  --app-mtk                    使用 luci-app-mtk wifi 配置"
-            echo "  --optimization-level LEVEL   优化级别 (basic/full/advanced/custom)"
-            echo "  --enable/disable-lto         启用/禁用 LTO"
-            echo "  --enable/disable-mold        启用/禁用 MOLD"
-            echo "  --enable/disable-bpf         启用/禁用 BPF"
-            echo "  --enable/disable-kernel-clang-lto  启用/禁用内核 CLANG LTO"
-            echo "  --use-gcc14/default-gcc      使用 GCC14/默认 GCC"
-            echo "  --enable/disable-advanced-features  启用/禁用高级功能"
             echo "  --custom-lan-ip IP           自定义 LAN IP 地址"
             echo "  --help                       显示帮助"
             exit 0
@@ -114,24 +89,10 @@ done
 
 echo "🚀 开始 Docker OpenWrt 编译..."
 echo "⚙️  编译配置:"
-echo "  - APP_MTK: $APP_MTK"
-echo "  - OPTIMIZATION_LEVEL: $OPTIMIZATION_LEVEL"
-echo "  - ENABLE_LTO: $ENABLE_LTO"
-echo "  - ENABLE_MOLD: $ENABLE_MOLD"
-echo "  - ENABLE_BPF: $ENABLE_BPF"
-echo "  - KERNEL_CLANG_LTO: $KERNEL_CLANG_LTO"
-echo "  - USE_GCC14: $USE_GCC14"
-echo "  - ENABLE_ADVANCED_FEATURES: $ENABLE_ADVANCED_FEATURES"
+
 echo "  - CUSTOM_LAN_IP: $CUSTOM_LAN_IP"
 
 # 设置环境变量
-export OPTIMIZATION_LEVEL
-export ENABLE_LTO
-export ENABLE_MOLD
-export ENABLE_BPF
-export KERNEL_CLANG_LTO
-export USE_GCC14
-export ENABLE_ADVANCED_FEATURES
 export CUSTOM_LAN_IP
 
 # 检查磁盘空间
@@ -161,6 +122,8 @@ fi
 # 执行 DIY 脚本
 echo "🔧 执行 DIY 脚本..."
 
+cp /workdir/feeds.conf.default openwrt/feeds.conf.default
+
 # 检查并执行 diy-part1.sh
 if [ -f "/workdir/scripts/diy-part1.sh" ]; then
     sudo chmod +x /workdir/scripts/diy-part1.sh
@@ -176,21 +139,20 @@ echo "🔄 更新和安装 feeds..."
 
 # 复制配置文件并执行第二部分 DIY 脚本
 echo "⚙️  配置编译选项..."
-cp defconfig/mt7981-ax3000.config .config
+cp /workdir/24.10-6.6.config .config
 
-if [ -f "/workdir/scripts/diy-part2-optimized.sh" ]; then
-    sudo chmod +x /workdir/scripts/diy-part2-optimized.sh
-    /workdir/scripts/diy-part2-optimized.sh
+echo "🔧 集成 iStore 商店..."
+echo >> feeds.conf.default
+echo 'src-git istore https://github.com/linkease/istore;main' >> feeds.conf.default
+./scripts/feeds update istore
+./scripts/feeds install -d y -p istore luci-app-store
+
+if [ -f "/workdir/scripts/diy-part2.sh" ]; then
+    sudo chmod +x /workdir/scripts/diy-part2.sh
+    /workdir/scripts/diy-part2.sh
 fi
 
-# 应用 MTK 配置（如果启用）
-if [ "$APP_MTK" = true ]; then
-    echo "📱 应用 MTK WiFi 配置..."
-    sed -i 's/CONFIG_PACKAGE_luci-app-mtwifi-cfg=y/CONFIG_PACKAGE_luci-app-mtk=y/g' .config
-    sed -i 's/CONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y/CONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y/g' .config
-    sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
-    sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
-fi
+setup_custom_lan_ip
 
 # 下载包
 echo "📥 下载编译所需包..."
@@ -302,3 +264,6 @@ echo "📁 固件位置: $FIRMWARE_DIR"
 if [ -d "/output" ]; then
     echo "📁 固件也已保存到: /output"
 fi
+
+
+

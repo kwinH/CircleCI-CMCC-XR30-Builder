@@ -11,8 +11,10 @@ services:
     volumes:
       - ./output:/output
       - ./data:/workdir/data
-      - ../diy-part1.sh:/workdir/scripts/diy-part1.sh
-      - ../diy-part2-optimized.sh:/workdir/scripts/diy-part2-optimized.sh
+      - ../feeds.conf.default:/workdir/feeds.conf.default
+      - ../config/24.10-6.6.config:/workdir/24.10-6.6.config
+      - ../scripts/24.10-6.6/diy-part1.sh:/workdir/scripts/diy-part1.sh
+      - ../scripts/24.10-6.6/diy-part2.sh:/workdir/scripts/diy-part2.sh
       - ./build-openwrt.sh:/workdir/scripts/build-openwrt.sh
     environment:
       - TZ=Asia/Shanghai

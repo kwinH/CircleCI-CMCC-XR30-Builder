@@ -1,10 +1,8 @@
+# https://github.com/rax3000m/rax3000m-PlanetEditorX-ImmortalWrt-CMCC-RAX3000M-EMMC-24.10
 name: IMwrt-24.10-6.6
 
 on:
   repository_dispatch:
-    types: [build_firmware]
-  push:
-  #   branches: [ main ]
   workflow_dispatch:
     inputs:
       device_model:
@@ -49,7 +47,7 @@ on:
         description: '集成iStore商店'
         type: boolean
         required: true
-        default: false
+        default: true
       ssh:
         description: 'SSH connection to Actions'
         type: boolean
