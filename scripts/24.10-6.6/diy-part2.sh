@@ -20,12 +20,29 @@
 #   echo "警告：$CONFIG_FILE 不存在，跳过 IP 修改"
 # fi
 
+function config_add(){
+    yes="CONFIG_$1=y"
+    no="# CONFIG_$1 is not set"
+    sed -i "s/${no}/${yes}/" .config
+    if ! grep -q "$yes" .config; then
+        echo "$yes" >> .config
+    fi
+}
+
+function config_package_add(){
+    config_add "PACKAGE_$1"
+}
+
 # 预装
 # OpenClash
 echo "CONFIG_PACKAGE_luci-app-openclash=y" >> .config
+config_package_add "luci-app-openclash"
+
 # 微信推送
-echo "CONFIG_PACKAGE_luci-app-wechatpush=y" >> .config
-echo "CONFIG_PACKAGE_luci-i18n-wechatpush-zh-cn=y" >> .config
+config_package_add "luci-app-wechatpush"
+config_package_add "luci-i18n-wechatpush-zh-cn"
+
+
 
 # 删除 package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom/e2p
 rm -f package/mtk/drivers/mt_wifi/files/mt7981-default-eeprom/e2p
