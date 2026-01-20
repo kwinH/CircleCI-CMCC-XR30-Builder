@@ -182,8 +182,8 @@ jobs:
             - name: cp .config
               id: cp_config
               run: |
-                    if [ -f "$GITHUB_WORKSPACE/.config" ]; then
-                      cp -f $GITHUB_WORKSPACE/.config openwrt/.config
+                    if [ -f "$GITHUB_WORKSPACE/config/24.10-6.6.config" ]; then
+                      cp -f $GITHUB_WORKSPACE/config/24.10-6.6.config openwrt/.config
                     else
                       echo "⚠️ Config file not found, using reload option"
                       # 自动触发配置重载逻辑

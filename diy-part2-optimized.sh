@@ -696,7 +696,7 @@ function configure_default_shell() {
 # Device configuration
 echo "⌚ Device list before fixed..." 
 config_device_list
-config_device_keep_only "cmcc_xr30-stock"
+#config_device_keep_only "cmcc_xr30-stock"
 
 echo "✅ Configured for XR30-stock (H layout) only"
 echo "⌚ Device list after fixed..." 
