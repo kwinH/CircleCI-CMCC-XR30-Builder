@@ -9,50 +9,10 @@ on:
                 required: true
                 default: false
                 type: boolean
-            APP_MTK:
-                description: 'Use luci-app-mtk wifi config'
+            istore:
+                description: '集成iStore商店'
                 required: true
-                default: false
-                type: boolean
-            OPTIMIZATION_LEVEL:
-                description: 'Optimization level: basic (LTO+MOLD), full (LTO+MOLD+BPF+CLANG), advanced (all optimizations), custom (manual)'
-                required: false
-                default: 'full'
-                type: choice
-                options:
-                - 'basic'
-                - 'full'
-                - 'advanced'
-                - 'custom'
-            ENABLE_LTO:
-                description: '[Custom Mode] Enable Link Time Optimization'
-                required: false
                 default: true
-                type: boolean
-            ENABLE_MOLD:
-                description: '[Custom Mode] Enable MOLD linker (faster compilation)'
-                required: false
-                default: true
-                type: boolean
-            ENABLE_BPF:
-                description: '[Custom Mode] Enable extended BPF support'
-                required: false
-                default: true
-                type: boolean
-            KERNEL_CLANG_LTO:
-                description: '[Custom Mode] Enable Kernel CLANG LTO'
-                required: false
-                default: true
-                type: boolean
-            USE_GCC14:
-                description: '[Custom Mode] Use GCC 14 for userspace compilation'
-                required: false
-                default: true
-                type: boolean
-            ENABLE_ADVANCED_FEATURES:
-                description: '[Custom Mode] Enable advanced features (LRNG+DPDK+Local KMOD)'
-                required: false
-                default: false
                 type: boolean
             CUSTOM_LAN_IP:
                 description: 'Custom LAN IP address (default: 192.168.6.1)'
@@ -71,15 +31,8 @@ env:
     DIY_P1_SH: diy-part1.sh
     DIY_P2_SH: diy-part2-optimized.sh
 
-    # Optimization flags
-    OPTIMIZATION_LEVEL: ${{ github.event.inputs.OPTIMIZATION_LEVEL || 'full' }}
-    # Individual optimization settings (only used in custom mode)
-    ENABLE_LTO: ${{ github.event.inputs.ENABLE_LTO || 'true' }}
-    ENABLE_MOLD: ${{ github.event.inputs.ENABLE_MOLD || 'true' }}
-    ENABLE_BPF: ${{ github.event.inputs.ENABLE_BPF || 'true' }}
-    KERNEL_CLANG_LTO: ${{ github.event.inputs.KERNEL_CLANG_LTO || 'true' }}
-    USE_GCC14: ${{ github.event.inputs.USE_GCC14 || 'true' }}
-    ENABLE_ADVANCED_FEATURES: ${{ github.event.inputs.ENABLE_ADVANCED_FEATURES || 'false' }}
+
+
     CUSTOM_LAN_IP: ${{ github.event.inputs.CUSTOM_LAN_IP || '192.168.6.1' }}
 
 jobs:
@@ -123,13 +76,7 @@ jobs:
                 # Install build dependencies including mold
                 sudo apt-get install golang-go mold libisl-dev -y
                 sudo bash -c 'bash <(curl -s https://build-scripts.immortalwrt.org/init_build_environment.sh)'
-                
-                # Install additional optimization tools
-                if [ "${{ env.USE_GCC14 }}" = "true" ]; then
-                  sudo apt-get install gcc-14 g++-14 -y
-                  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
-                  sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
-                fi
+              
                 
                 sudo -E apt-get -qq autoremove --purge
                 sudo -E apt-get -qq clean
@@ -137,16 +84,7 @@ jobs:
                 sudo mkdir -p /workdir
                 sudo chown $USER:$GROUPS /workdir
                 
-                # Print optimization settings
-                echo "🚀 Build Optimization Settings:"
-                echo "  ENABLE_LTO: ${{ env.ENABLE_LTO }}"
-                echo "  ENABLE_MOLD: ${{ env.ENABLE_MOLD }}"
-                echo "  ENABLE_BPF: ${{ env.ENABLE_BPF }}"
-                echo "  KERNEL_CLANG_LTO: ${{ env.KERNEL_CLANG_LTO }}"
-                echo "  USE_GCC14: ${{ env.USE_GCC14 }}"
-                echo "  ENABLE_LRNG: ${{ env.ENABLE_LRNG }}"
-                echo "  ENABLE_DPDK: ${{ env.ENABLE_DPDK }}"
-                echo "  ENABLE_LOCAL_KMOD: ${{ env.ENABLE_LOCAL_KMOD }}"
+
                 
                 echo "status=success" >> $GITHUB_OUTPUT
 
@@ -201,14 +139,15 @@ jobs:
                     $GITHUB_WORKSPACE/$DIY_P2_SH
                     echo "status=success" >> $GITHUB_OUTPUT
 
-            - name: Use luci-app-mtk config
-              if: github.event.inputs.APP_MTK == 'true'
+
+            - name: 安装iStore商店
+              if: (github.event.inputs.istore == 'true')
               run: |
                 cd openwrt
-                sed -i 's/CONFIG_PACKAGE_luci-app-mtwifi-cfg=y/CONFIG_PACKAGE_luci-app-mtk=y/g' .config
-                sed -i 's/CONFIG_PACKAGE_luci-i18n-mtwifi-cfg-zh-cn=y/CONFIG_PACKAGE_luci-i18n-mtk-zh-cn=y/g' .config
-                sed -i 's/CONFIG_PACKAGE_mtwifi-cfg=y/CONFIG_PACKAGE_wifi-profile=y/g' .config
-                sed -i 's/CONFIG_PACKAGE_lua-cjson=y/CONFIG_WIFI_NORMAL_SETTING=y/g' .config
+                echo >> feeds.conf.default
+                echo 'src-git istore https://github.com/linkease/istore;main' >> feeds.conf.default
+                ./scripts/feeds update istore
+                ./scripts/feeds install -d y -p istore luci-app-store
 
             - name: cat config
               run: |
@@ -278,16 +217,6 @@ jobs:
                 CORES=$(nproc)
                 JOBS=$((CORES + 1))
                 
-                echo "🚀 Starting optimized compilation with ${JOBS} parallel jobs"
-                echo "Build optimizations enabled:"
-                echo "  - LTO: ${{ env.ENABLE_LTO }}"
-                echo "  - MOLD: ${{ env.ENABLE_MOLD }}"
-                echo "  - BPF: ${{ env.ENABLE_BPF }}"
-                echo "  - Kernel CLANG LTO: ${{ env.KERNEL_CLANG_LTO }}"
-                echo "  - GCC14: ${{ env.USE_GCC14 }}"
-                echo "  - LRNG: ${{ env.ENABLE_LRNG }}"
-                echo "  - DPDK: ${{ env.ENABLE_DPDK }}"
-                echo "  - Local KMOD: ${{ env.ENABLE_LOCAL_KMOD }}"
                 
                 # Record build start time
                 BUILD_START=$(date +%s)
