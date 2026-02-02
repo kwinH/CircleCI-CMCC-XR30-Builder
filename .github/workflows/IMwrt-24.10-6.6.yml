@@ -1,39 +1,39 @@
 # https://github.com/rax3000m/rax3000m-PlanetEditorX-ImmortalWrt-CMCC-RAX3000M-EMMC-24.10
 name: IMwrt-24.10-6.6
 
-on:
+于:
   repository_dispatch:
   workflow_dispatch:
     inputs:
       device_model:
         description: '选择目标设备型号'
-        type: choice
+        输入: choice
         required: true
         options:
           - cmcc_rax3000m-emmc
       LAN_IP:
         description: '设置 LAN IP 地址'
         required: true
-        default: '192.168.6.1'
+        默认: '192.168.6.1'
       enable_5g_25db:
         description: '启用 5G 25dB 修改'
-        type: boolean
+        输入: boolean
         required: true
-        default: true
+        默认: true
       upload_bin_dir:
         description: '上传 bin 目录'
-        type: boolean
+        输入: boolean
         required: true
-        default: true
+        默认: true
       repo_url:
         description: '源仓库 URL'
-        default: 'https://github.com/padavanonly/immortalwrt-mt798x-6.6'
-        type: choice
+        默认: 'https://github.com/padavanonly/immortalwrt-mt798x-6.6'
+        输入: choice
         options:
           - 'https://github.com/padavanonly/immortalwrt-mt798x-6.6'
       repo_branch:
         description: '源仓库分支'
-        default: 'openwrt-24.10-6.6'
+        默认: 'openwrt-24.10-6.6'
         type: choice
         options:
           - 'openwrt-24.10-6.6'
@@ -54,8 +54,8 @@ on:
         required: true
         default: false
 
-  schedule:
-    - cron: '0 16 * * *' # 北京时间每天00:00
+  # schedule:
+  #   - cron: '0 16 * * *' # 北京时间每天00:00
 
 permissions:
   contents: write
